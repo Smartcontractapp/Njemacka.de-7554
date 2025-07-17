@@ -1,22 +1,53 @@
-import React,{useState,useEffect} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {motion} from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
-import {blogPosts} from '../../data/blogPosts';
-import {coupons} from '../../data/coupons';
-import {dailyNews} from '../../data/news';
-import {faqData} from '../../data/faq';
-import {classifiedAds} from '../../data/classifiedAds';
+import { blogPosts } from '../../data/blogPosts';
+import { coupons } from '../../data/coupons';
+import { dailyNews } from '../../data/news';
+import { faqData } from '../../data/faq';
+import { classifiedAds } from '../../data/classifiedAds';
 
-const {FiPlus,FiEdit,FiTrash2,FiEye,FiUsers,FiTag,FiCreditCard,FiPackage,FiFileText,FiMessageSquare,FiCalendar,FiAlertTriangle,FiCheckCircle,FiXCircle,FiSearch,FiFilter,FiRefreshCw,FiMoreVertical,FiSettings,FiTrendingUp,FiGlobe,FiImage,FiVideo,FiNavigation,FiCode,FiMap,FiRss,FiTarget,FiZap,FiLayers}=FiIcons;
+const {
+  FiPlus,
+  FiEdit,
+  FiTrash2,
+  FiEye,
+  FiUsers,
+  FiTag,
+  FiCreditCard,
+  FiPackage,
+  FiFileText,
+  FiMessageSquare,
+  FiCalendar,
+  FiAlertTriangle,
+  FiCheckCircle,
+  FiXCircle,
+  FiSearch,
+  FiFilter,
+  FiRefreshCw,
+  FiMoreVertical,
+  FiSettings,
+  FiTrendingUp,
+  FiGlobe,
+  FiImage,
+  FiVideo,
+  FiNavigation,
+  FiCode,
+  FiMap,
+  FiRss,
+  FiTarget,
+  FiZap,
+  FiLayers
+} = FiIcons;
 
-const AdminDashboard=()=> {
-  const navigate=useNavigate();
-  const [activeTab,setActiveTab]=useState('overview');
+const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Statistics for dashboard
-  const stats={
+  const stats = {
     blogPosts: blogPosts.length,
     coupons: coupons.length,
     news: dailyNews.length,
@@ -25,157 +56,161 @@ const AdminDashboard=()=> {
   };
 
   // Enhanced delete post function
-  const handleDeletePost=(postId,category)=> {
+  const handleDeletePost = (postId, category) => {
     if (window.confirm('Da li ste sigurni da želite obrisati ovaj post? Ova akcija se ne može poništiti.')) {
       try {
         // For blog posts
-        if (category==='blog') {
-          const updatedPosts=blogPosts.filter(post=> post.id !==postId);
+        if (category === 'blog') {
+          const updatedPosts = blogPosts.filter(post => post.id !== postId);
           // Here you would normally make an API call to delete from backend
-          console.log('Post deleted:',postId);
+          console.log('Post deleted:', postId);
           alert('Post je uspješno obrisan!');
           return;
         }
+
         // For coupons
-        if (category==='coupons') {
-          const updatedCoupons=coupons.filter(coupon=> coupon.id !==postId);
-          console.log('Coupon deleted:',postId);
+        if (category === 'coupons') {
+          const updatedCoupons = coupons.filter(coupon => coupon.id !== postId);
+          console.log('Coupon deleted:', postId);
           alert('Kupon je uspješno obrisan!');
           return;
         }
+
         // For news
-        if (category==='news') {
-          const updatedNews=dailyNews.filter(news=> news.id !==postId);
-          console.log('News deleted:',postId);
+        if (category === 'news') {
+          const updatedNews = dailyNews.filter(news => news.id !== postId);
+          console.log('News deleted:', postId);
           alert('Vijest je uspješno obrisana!');
           return;
         }
+
         // For FAQ
-        if (category==='faq') {
-          const updatedFAQ=faqData.filter(faq=> faq.id !==postId);
-          console.log('FAQ deleted:',postId);
+        if (category === 'faq') {
+          const updatedFAQ = faqData.filter(faq => faq.id !== postId);
+          console.log('FAQ deleted:', postId);
           alert('FAQ je uspješno obrisan!');
           return;
         }
+
         // For category specific posts
-        const categoryPosts=blogPosts.filter(post=> post.category===category);
-        const updatedCategoryPosts=categoryPosts.filter(post=> post.id !==postId);
-        console.log('Category post deleted:',postId);
+        const categoryPosts = blogPosts.filter(post => post.category === category);
+        const updatedCategoryPosts = categoryPosts.filter(post => post.id !== postId);
+        console.log('Category post deleted:', postId);
         alert('Post je uspješno obrisan!');
       } catch (error) {
-        console.error('Error deleting post:',error);
+        console.error('Error deleting post:', error);
         alert('Došlo je do greške prilikom brisanja. Pokušajte ponovo.');
       }
     }
   };
 
   // Enhanced edit post function
-  const handleEditPost=(postId,category)=> {
+  const handleEditPost = (postId, category) => {
     try {
-      let editPath='/admin/editor';
-      let editData=null;
+      let editPath = '/admin/editor';
+      let editData = null;
 
       // Determine the correct edit path and data based on category
       switch (category) {
         case 'blog':
-          editData=blogPosts.find(post=> post.id===postId);
-          editPath +='?type=blog';
+          editData = blogPosts.find(post => post.id === postId);
+          editPath += '?type=blog';
           break;
         case 'coupons':
-          editData=coupons.find(coupon=> coupon.id===postId);
-          editPath +='?type=coupon';
+          editData = coupons.find(coupon => coupon.id === postId);
+          editPath += '?type=coupon';
           break;
         case 'news':
-          editData=dailyNews.find(news=> news.id===postId);
-          editPath +='?type=news';
+          editData = dailyNews.find(news => news.id === postId);
+          editPath += '?type=news';
           break;
         case 'faq':
-          editData=faqData.find(faq=> faq.id===postId);
-          editPath +='?type=faq';
+          editData = faqData.find(faq => faq.id === postId);
+          editPath += '?type=faq';
           break;
         default:
           // For category specific posts
-          editData=blogPosts.find(post=> post.id===postId && post.category===category);
-          editPath +='?type=blog';
+          editData = blogPosts.find(post => post.id === postId && post.category === category);
+          editPath += '?type=blog';
           break;
       }
 
       // Add the ID and category as URL parameters
       if (editData) {
-        editPath +=`&id=${postId}&category=${encodeURIComponent(category)}`;
+        editPath += `&id=${postId}&category=${encodeURIComponent(category)}`;
         // Store the edit data in sessionStorage for the editor to access
-        sessionStorage.setItem('editData',JSON.stringify(editData));
+        sessionStorage.setItem('editData', JSON.stringify(editData));
         navigate(editPath);
       } else {
         throw new Error('Post not found');
       }
     } catch (error) {
-      console.error('Error editing post:',error);
+      console.error('Error editing post:', error);
       alert('Došlo je do greške prilikom učitavanja posta za uređivanje. Pokušajte ponovo.');
     }
   };
 
   // Enhanced post preview function
-  const handlePreviewPost=(postId,category)=> {
+  const handlePreviewPost = (postId, category) => {
     try {
-      let previewData=null;
-      let previewPath='';
+      let previewData = null;
+      let previewPath = '';
 
       // Find the correct data based on category
       switch (category) {
         case 'blog':
-          previewData=blogPosts.find(post=> post.id===postId);
-          previewPath=`/post/${previewData?.slug}`;
+          previewData = blogPosts.find(post => post.id === postId);
+          previewPath = `/post/${previewData?.slug}`;
           break;
         case 'news':
-          previewData=dailyNews.find(news=> news.id===postId);
-          previewPath=`/news/${postId}`;
+          previewData = dailyNews.find(news => news.id === postId);
+          previewPath = `/news/${postId}`;
           break;
         case 'coupons':
-          previewData=coupons.find(coupon=> coupon.id===postId);
-          previewPath=`/coupons#${postId}`;
+          previewData = coupons.find(coupon => coupon.id === postId);
+          previewPath = `/coupons#${postId}`;
           break;
         case 'faq':
-          previewData=faqData.find(faq=> faq.id===postId);
-          previewPath=`/faq#${postId}`;
+          previewData = faqData.find(faq => faq.id === postId);
+          previewPath = `/faq#${postId}`;
           break;
         default:
-          previewData=blogPosts.find(post=> post.id===postId && post.category===category);
-          previewPath=`/post/${previewData?.slug}`;
+          previewData = blogPosts.find(post => post.id === postId && post.category === category);
+          previewPath = `/post/${previewData?.slug}`;
           break;
       }
 
       if (previewData) {
         // Open preview in new tab
-        window.open(previewPath,'_blank');
+        window.open(previewPath, '_blank');
       } else {
         throw new Error('Preview data not found');
       }
     } catch (error) {
-      console.error('Error previewing post:',error);
+      console.error('Error previewing post:', error);
       alert('Došlo je do greške prilikom otvaranja pregleda. Pokušajte ponovo.');
     }
   };
 
   // Add these action buttons to your table rows
-  const renderActionButtons=(item,category)=> (
+  const renderActionButtons = (item, category) => (
     <div className="flex space-x-2">
       <button
-        onClick={()=> handleEditPost(item.id,category)}
+        onClick={() => handleEditPost(item.id, category)}
         className="text-blue-600 hover:text-blue-900 transition-colors"
         title="Uredi"
       >
         <SafeIcon icon={FiEdit} className="w-5 h-5" />
       </button>
       <button
-        onClick={()=> handlePreviewPost(item.id,category)}
+        onClick={() => handlePreviewPost(item.id, category)}
         className="text-green-600 hover:text-green-900 transition-colors"
         title="Pregledaj"
       >
         <SafeIcon icon={FiEye} className="w-5 h-5" />
       </button>
       <button
-        onClick={()=> handleDeletePost(item.id,category)}
+        onClick={() => handleDeletePost(item.id, category)}
         className="text-red-600 hover:text-red-900 transition-colors"
         title="Obriši"
       >
@@ -184,13 +219,24 @@ const AdminDashboard=()=> {
     </div>
   );
 
+  // Function to render "Dodaj" button for each category
+  const renderAddButton = (type, label) => (
+    <button
+      onClick={() => navigate(`/admin/editor?type=${type}`)}
+      className="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm mb-4"
+    >
+      <SafeIcon icon={FiPlus} className="w-3 h-3" />
+      <span>Dodaj {label}</span>
+    </button>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
-          initial={{opacity: 0, y: 20}}
-          animate={{opacity: 1, y: 0}}
-          transition={{duration: 0.6}}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -200,14 +246,14 @@ const AdminDashboard=()=> {
             </div>
             <div className="flex items-center space-x-3">
               <button
-                onClick={()=> navigate('/admin/editor?type=blog')}
+                onClick={() => navigate('/admin/editor?type=blog')}
                 className="flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg"
               >
                 <SafeIcon icon={FiPlus} className="w-4 h-4" />
                 <span>Novi post</span>
               </button>
               <button
-                onClick={()=> setActiveTab('seo')}
+                onClick={() => setActiveTab('seo')}
                 className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
               >
                 <SafeIcon icon={FiTrendingUp} className="w-4 h-4" />
@@ -219,40 +265,40 @@ const AdminDashboard=()=> {
           {/* Navigation Tabs */}
           <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-8">
             <button
-              onClick={()=> setActiveTab('overview')}
+              onClick={() => setActiveTab('overview')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'overview' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                activeTab === 'overview'
+                  ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Pregled
             </button>
             <button
-              onClick={()=> setActiveTab('content')}
+              onClick={() => setActiveTab('content')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'content' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                activeTab === 'content'
+                  ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Sadržaj
             </button>
             <button
-              onClick={()=> setActiveTab('seo')}
+              onClick={() => setActiveTab('seo')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'seo' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                activeTab === 'seo'
+                  ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               SEO Podešavanja
             </button>
             <button
-              onClick={()=> setActiveTab('multilingual')}
+              onClick={() => setActiveTab('multilingual')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'multilingual' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                activeTab === 'multilingual'
+                  ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -261,7 +307,7 @@ const AdminDashboard=()=> {
           </div>
 
           {/* Dashboard Overview */}
-          {activeTab==='overview' && (
+          {activeTab === 'overview' && (
             <div className="mb-8">
               <h2 className="text-lg font-medium text-gray-900 mb-4">Pregled</h2>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -305,12 +351,13 @@ const AdminDashboard=()=> {
           )}
 
           {/* Content Management */}
-          {activeTab==='content' && (
+          {activeTab === 'content' && (
             <>
               {/* Blog Posts Table */}
               <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
-                <div className="px-6 py-4 border-b border-gray-200">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="text-lg font-medium text-gray-900">Blog Postovi</h3>
+                  {renderAddButton('blog', 'Blog Post')}
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -331,7 +378,7 @@ const AdminDashboard=()=> {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {blogPosts.map((post)=> (
+                      {blogPosts.map((post) => (
                         <tr key={post.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">{post.title}</div>
@@ -345,7 +392,7 @@ const AdminDashboard=()=> {
                             {post.date}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            {renderActionButtons(post,'blog')}
+                            {renderActionButtons(post, 'blog')}
                           </td>
                         </tr>
                       ))}
@@ -356,8 +403,9 @@ const AdminDashboard=()=> {
 
               {/* News Table */}
               <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
-                <div className="px-6 py-4 border-b border-gray-200">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="text-lg font-medium text-gray-900">Vijesti</h3>
+                  {renderAddButton('news', 'Vijest')}
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -378,7 +426,7 @@ const AdminDashboard=()=> {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {dailyNews.map((news)=> (
+                      {dailyNews.map((news) => (
                         <tr key={news.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">{news.title}</div>
@@ -392,7 +440,7 @@ const AdminDashboard=()=> {
                             {news.date}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            {renderActionButtons(news,'news')}
+                            {renderActionButtons(news, 'news')}
                           </td>
                         </tr>
                       ))}
@@ -403,8 +451,9 @@ const AdminDashboard=()=> {
 
               {/* Coupons Table */}
               <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
-                <div className="px-6 py-4 border-b border-gray-200">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="text-lg font-medium text-gray-900">Kuponi</h3>
+                  {renderAddButton('coupon', 'Kupon')}
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -428,7 +477,7 @@ const AdminDashboard=()=> {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {coupons.map((coupon)=> (
+                      {coupons.map((coupon) => (
                         <tr key={coupon.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">{coupon.title}</div>
@@ -445,7 +494,7 @@ const AdminDashboard=()=> {
                             {coupon.validUntil}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            {renderActionButtons(coupon,'coupons')}
+                            {renderActionButtons(coupon, 'coupons')}
                           </td>
                         </tr>
                       ))}
@@ -456,8 +505,9 @@ const AdminDashboard=()=> {
 
               {/* FAQ Table */}
               <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
-                <div className="px-6 py-4 border-b border-gray-200">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="text-lg font-medium text-gray-900">FAQ</h3>
+                  {renderAddButton('faq', 'FAQ')}
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -481,7 +531,7 @@ const AdminDashboard=()=> {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {faqData.map((faq)=> (
+                      {faqData.map((faq) => (
                         <tr key={faq.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">{faq.question}</div>
@@ -498,7 +548,7 @@ const AdminDashboard=()=> {
                             {faq.helpful}%
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            {renderActionButtons(faq,'faq')}
+                            {renderActionButtons(faq, 'faq')}
                           </td>
                         </tr>
                       ))}
@@ -515,7 +565,7 @@ const AdminDashboard=()=> {
                     <p className="text-sm text-gray-600 mt-1">Upravljajte oglasima korisnika</p>
                   </div>
                   <button
-                    onClick={()=> navigate('/admin/classifieds')}
+                    onClick={() => navigate('/admin/classifieds')}
                     className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg"
                   >
                     Upravljaj oglasima
@@ -526,12 +576,12 @@ const AdminDashboard=()=> {
           )}
 
           {/* SEO Settings Tab */}
-          {activeTab==='seo' && (
+          {activeTab === 'seo' && (
             <SEOSettings />
           )}
 
           {/* Multilingual Settings Tab */}
-          {activeTab==='multilingual' && (
+          {activeTab === 'multilingual' && (
             <MultilingualSettings />
           )}
         </motion.div>
@@ -548,7 +598,6 @@ const SEOSettings = () => {
     siteDescription: 'Sveobuhvatan vodič kroz Njemačku sa blog postovima, vijestima, kuponima i FAQ-om.',
     siteKeywords: 'Njemačka, blog, putovanja, kultura, život, vijesti, kuponi, FAQ, saveti',
     canonicalUrl: 'https://njemacka-blog.com',
-    
     // Schema Markup
     schemaTypes: {
       organization: true,
@@ -562,7 +611,6 @@ const SEOSettings = () => {
       howTo: false,
       recipe: false
     },
-    
     // XML Sitemaps
     sitemaps: {
       mainSitemap: true,
@@ -572,7 +620,6 @@ const SEOSettings = () => {
       mobileSitemap: true,
       categorySitemap: true
     },
-    
     // RSS Feeds
     rssFeeds: {
       mainFeed: true,
@@ -580,7 +627,6 @@ const SEOSettings = () => {
       newsFeed: true,
       couponsFeed: false
     },
-    
     // Image SEO
     imageSeo: {
       autoAltText: true,
@@ -589,7 +635,6 @@ const SEOSettings = () => {
       imageCompression: true,
       structuredData: true
     },
-    
     // Text SEO
     textSeo: {
       readabilityAnalysis: true,
@@ -598,7 +643,6 @@ const SEOSettings = () => {
       internalLinking: true,
       externalLinking: false
     },
-    
     // Video SEO
     videoSeo: {
       videoSitemap: false,
@@ -644,7 +688,7 @@ const SEOSettings = () => {
       'njemački transport',
       'božićni sajmovi Njemačka'
     ];
-    
+
     alert('Generirani ključni pojmovi:\n\n' + suggestedKeywords.join(', '));
   };
 
@@ -919,7 +963,7 @@ const MultilingualSettings = () => {
   });
 
   const handleLanguageToggle = (code) => {
-    setLanguages(prev => prev.map(lang => 
+    setLanguages(prev => prev.map(lang =>
       lang.code === code ? { ...lang, enabled: !lang.enabled } : lang
     ));
   };
@@ -959,7 +1003,6 @@ const MultilingualSettings = () => {
           <SafeIcon icon={FiGlobe} className="w-5 h-5 text-gray-600" />
           <h3 className="text-lg font-semibold text-gray-900">Odabir jezika</h3>
         </div>
-        
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {languages.map((language) => (
             <div key={language.code} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
@@ -979,8 +1022,8 @@ const MultilingualSettings = () => {
                 <button
                   onClick={() => handleDefaultLanguage(language.code)}
                   className={`text-xs px-2 py-1 rounded ${
-                    language.default 
-                      ? 'bg-primary-100 text-primary-800' 
+                    language.default
+                      ? 'bg-primary-100 text-primary-800'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
@@ -996,16 +1039,15 @@ const MultilingualSettings = () => {
             <h4 className="font-medium text-blue-900 mb-2">Omogućeni jezici ({enabledLanguages.length})</h4>
             <div className="flex flex-wrap gap-2">
               {enabledLanguages.map((lang) => (
-                <span 
+                <span
                   key={lang.code}
                   className={`px-3 py-1 rounded-full text-sm ${
-                    lang.default 
-                      ? 'bg-primary-600 text-white' 
+                    lang.default
+                      ? 'bg-primary-600 text-white'
                       : 'bg-blue-100 text-blue-800'
                   }`}
                 >
-                  {lang.name} ({lang.code})
-                  {lang.default && ' - Glavni'}
+                  {lang.name} ({lang.code}) {lang.default && ' - Glavni'}
                 </span>
               ))}
             </div>
@@ -1019,7 +1061,6 @@ const MultilingualSettings = () => {
           <SafeIcon icon={FiLayers} className="w-5 h-5 text-gray-600" />
           <h3 className="text-lg font-semibold text-gray-900">Hreflang tagovi</h3>
         </div>
-        
         <div className="space-y-4">
           <label className="flex items-center space-x-2">
             <input
@@ -1033,7 +1074,6 @@ const MultilingualSettings = () => {
             />
             <span className="text-sm text-gray-700">Omogući hreflang tagove</span>
           </label>
-          
           <label className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -1071,7 +1111,6 @@ const MultilingualSettings = () => {
           <SafeIcon icon={FiTarget} className="w-5 h-5 text-gray-600" />
           <h3 className="text-lg font-semibold text-gray-900">Upravljanje prijevodima</h3>
         </div>
-        
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
             <div>
@@ -1082,7 +1121,6 @@ const MultilingualSettings = () => {
               Konfiguriši
             </button>
           </div>
-          
           <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
             <div>
               <h4 className="font-medium text-gray-900">Manualni prijevod</h4>
@@ -1092,7 +1130,6 @@ const MultilingualSettings = () => {
               Upravljaj
             </button>
           </div>
-          
           <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
             <div>
               <h4 className="font-medium text-gray-900">Status prijevoda</h4>
@@ -1111,7 +1148,6 @@ const MultilingualSettings = () => {
           <SafeIcon icon={FiNavigation} className="w-5 h-5 text-gray-600" />
           <h3 className="text-lg font-semibold text-gray-900">URL struktura</h3>
         </div>
-        
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">URL format</label>
@@ -1121,7 +1157,6 @@ const MultilingualSettings = () => {
               <option value="parameter">Parametar (example.com?lang=de)</option>
             </select>
           </div>
-          
           <div className="p-4 bg-blue-50 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">Primjer URL strukture</h4>
             <div className="text-sm text-blue-800 space-y-1">

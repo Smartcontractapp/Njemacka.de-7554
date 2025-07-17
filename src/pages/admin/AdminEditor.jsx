@@ -1,24 +1,41 @@
-import React,{useState,useEffect} from 'react';
-import {useNavigate,useSearchParams} from 'react-router-dom';
-import {motion} from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
+import { blogPosts } from '../../data/blogPosts';
+import { coupons } from '../../data/coupons';
+import { dailyNews } from '../../data/news';
+import { faqData } from '../../data/faq';
 
-const {FiSave,FiEye,FiArrowLeft,FiImage,FiTag,FiCalendar,FiSend,FiSettings,FiGlobe,FiTrendingUp,FiZap,FiTarget}=FiIcons;
+const {
+  FiSave,
+  FiEye,
+  FiArrowLeft,
+  FiImage,
+  FiTag,
+  FiCalendar,
+  FiSend,
+  FiSettings,
+  FiGlobe,
+  FiTrendingUp,
+  FiZap,
+  FiTarget
+} = FiIcons;
 
-const AdminEditor=()=> {
-  const [searchParams]=useSearchParams();
-  const navigate=useNavigate();
-  const [preview,setPreview]=useState(false);
-  const [saving,setSaving]=useState(false);
-  const [activeTab,setActiveTab]=useState('content');
+const AdminEditor = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [preview, setPreview] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('content');
 
   // Get type and other params from URL
-  const editorType=searchParams.get('type') || 'blog';
-  const editId=searchParams.get('id');
-  const category=searchParams.get('category');
+  const editorType = searchParams.get('type') || 'blog';
+  const editId = searchParams.get('id');
+  const category = searchParams.get('category');
 
-  const [formData,setFormData]=useState({
+  const [formData, setFormData] = useState({
     title: '',
     content: '',
     excerpt: '',
@@ -50,7 +67,8 @@ const AdminEditor=()=> {
     // Multilingual
     languages: ['bs'],
     translations: {},
-    ...((editorType==='coupon') && {
+    // Type-specific fields
+    ...((editorType === 'coupon') && {
       code: '',
       discount: '',
       validUntil: '',
@@ -59,17 +77,17 @@ const AdminEditor=()=> {
       terms: [],
       timeLimit: '7 dana'
     }),
-    ...((editorType==='news') && {
+    ...((editorType === 'news') && {
       source: '',
       urgent: false
     }),
-    ...((editorType==='faq') && {
+    ...((editorType === 'faq') && {
       question: '',
       answer: ''
     })
   });
 
-  useEffect(()=> {
+  useEffect(() => {
     if (editId) {
       try {
         // Load existing data for editing
@@ -95,33 +113,41 @@ const AdminEditor=()=> {
         alert('Error loading saved data. Please try again.');
       }
     }
-  },[editId, category]);
+  }, [editId, category]);
 
-  const handleChange=(e)=> {
-    const {name,value,type,checked}=e.target;
-    setFormData(prev=> ({
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
       ...prev,
-      [name]: type==='checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value
     }));
 
     // Auto-update SEO fields
     if (name === 'title' && !formData.seoTitle) {
-      setFormData(prev => ({ ...prev, seoTitle: value }));
+      setFormData(prev => ({
+        ...prev,
+        seoTitle: value
+      }));
     }
     if (name === 'excerpt' && !formData.seoDescription) {
-      setFormData(prev => ({ ...prev, seoDescription: value }));
+      setFormData(prev => ({
+        ...prev,
+        seoDescription: value
+      }));
     }
   };
 
-  const handleSave=async (saveType='draft')=> {
+  const handleSave = async (saveType = 'draft') => {
     setSaving(true);
     try {
-      const dataToSave={
+      const dataToSave = {
         ...formData,
         status: saveType,
         id: editId || Date.now(),
         createdAt: formData.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        date: new Date().toLocaleDateString('sr-RS'),
+        readTime: Math.ceil(formData.content.split(' ').length / 200) + ' min čitanja',
         slug: formData.title.toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/(^-|-$)/g, '')
@@ -129,6 +155,55 @@ const AdminEditor=()=> {
 
       // In a real app, this would be an API call
       console.log('Saving:', dataToSave);
+      
+      // Simulate saving to different data stores based on type
+      if (editorType === 'blog') {
+        // Add to blogPosts array (in real app, this would be API call)
+        if (!editId) {
+          blogPosts.unshift(dataToSave);
+        } else {
+          const index = blogPosts.findIndex(post => post.id === parseInt(editId));
+          if (index !== -1) {
+            blogPosts[index] = dataToSave;
+          }
+        }
+      } else if (editorType === 'news') {
+        if (!editId) {
+          dailyNews.unshift(dataToSave);
+        } else {
+          const index = dailyNews.findIndex(news => news.id === parseInt(editId));
+          if (index !== -1) {
+            dailyNews[index] = dataToSave;
+          }
+        }
+      } else if (editorType === 'coupon') {
+        if (!editId) {
+          coupons.unshift(dataToSave);
+        } else {
+          const index = coupons.findIndex(coupon => coupon.id === parseInt(editId));
+          if (index !== -1) {
+            coupons[index] = dataToSave;
+          }
+        }
+      } else if (editorType === 'faq') {
+        if (!editId) {
+          faqData.unshift({
+            ...dataToSave,
+            views: 0,
+            helpful: 85,
+            lastUpdated: new Date().toISOString().split('T')[0]
+          });
+        } else {
+          const index = faqData.findIndex(faq => faq.id === parseInt(editId));
+          if (index !== -1) {
+            faqData[index] = {
+              ...dataToSave,
+              lastUpdated: new Date().toISOString().split('T')[0]
+            };
+          }
+        }
+      }
+
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       let message;
@@ -142,7 +217,7 @@ const AdminEditor=()=> {
         default:
           message = 'Sadržaj je sačuvan kao draft!';
       }
-      
+
       alert(message);
       navigate('/admin/dashboard');
     } catch (error) {
@@ -153,10 +228,10 @@ const AdminEditor=()=> {
     }
   };
 
-  const handleArrayChange=(name,value)=> {
-    setFormData(prev=> ({
+  const handleArrayChange = (name, value) => {
+    setFormData(prev => ({
       ...prev,
-      [name]: value.split(',').map(item=> item.trim()).filter(item=> item)
+      [name]: value.split(',').map(item => item.trim()).filter(item => item)
     }));
   };
 
@@ -165,7 +240,7 @@ const AdminEditor=()=> {
     const suggestions = {
       title: `${formData.title} - Njemačka Blog`,
       description: formData.excerpt || `Saznajte više o ${formData.title.toLowerCase()} na našem blogu o Njemačkoj.`,
-      keywords: ['Njemačka', 'blog', formData.category?.toLowerCase(), ...formData.tags].filter(Boolean).join(', '),
+      keywords: ['Njemačka', 'blog', formData.category?.toLowerCase(), ...formData.tags].filter(Boolean).join(','),
       focusKeyphrase: formData.title.split(' ').slice(0, 3).join(' ').toLowerCase()
     };
 
@@ -185,13 +260,17 @@ const AdminEditor=()=> {
     const wordCount = formData.content.split(' ').length;
     const sentenceCount = formData.content.split(/[.!?]+/).length;
     const avgWordsPerSentence = wordCount / sentenceCount;
-    
+
     let score = 100;
     if (avgWordsPerSentence > 20) score -= 20;
     if (wordCount < 300) score -= 30;
     if (formData.content.split('\n\n').length < 3) score -= 10;
 
-    setFormData(prev => ({ ...prev, readabilityScore: Math.max(0, score) }));
+    setFormData(prev => ({
+      ...prev,
+      readabilityScore: Math.max(0, score)
+    }));
+
     alert(`Analiza čitljivosti završena! Rezultat: ${Math.max(0, score)}/100`);
   };
 
@@ -206,7 +285,11 @@ const AdminEditor=()=> {
     if (formData.canonicalUrl) score += 10;
     if (formData.ogTitle && formData.ogDescription) score += 10;
 
-    setFormData(prev => ({ ...prev, seoScore: score }));
+    setFormData(prev => ({
+      ...prev,
+      seoScore: score
+    }));
+
     alert(`SEO analiza završena! Rezultat: ${score}/100`);
   };
 
@@ -255,15 +338,49 @@ const AdminEditor=()=> {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="">Izaberite kategoriju</option>
-                  <option value="Jeftina Putovanja">Jeftina Putovanja</option>
-                  <option value="Kultura">Kultura</option>
-                  <option value="Život">Život</option>
-                  <option value="Besplatno">Besplatno</option>
-                  <option value="Kredit u Njemačkoj">Kredit u Njemačkoj</option>
-                  <option value="Bankovni račun">Bankovni račun</option>
-                  <option value="Zdravstveno osiguranje">Zdravstveno osiguranje</option>
-                  <option value="Mobilni Telefoni">Mobilni Telefoni</option>
-                  <option value="Internet priključak">Internet priključak</option>
+                  <optgroup label="Putovanja">
+                    <option value="Jeftina Putovanja">Jeftina Putovanja</option>
+                    <option value="Gradovi">Gradovi</option>
+                    <option value="Priroda">Priroda</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Smještaj">Smještaj</option>
+                  </optgroup>
+                  <optgroup label="Kultura">
+                    <option value="Kultura">Kultura i Istorija</option>
+                    <option value="Festivali">Festivali</option>
+                    <option value="Muzika">Muzika</option>
+                    <option value="Umetnost">Umetnost</option>
+                    <option value="Film">Film i TV</option>
+                  </optgroup>
+                  <optgroup label="Život">
+                    <option value="Život">Način Života</option>
+                    <option value="Rad">Rad i Karijera</option>
+                    <option value="Obrazovanje">Obrazovanje</option>
+                    <option value="Zdravlje">Zdravlje</option>
+                    <option value="Hrana">Hrana i Piće</option>
+                  </optgroup>
+                  <optgroup label="Finansije">
+                    <option value="Kredit u Njemačkoj">Kredit u Njemačkoj</option>
+                    <option value="Bankovni račun">Bankovni račun</option>
+                    <option value="Zdravstveno osiguranje">Zdravstveno osiguranje</option>
+                    <option value="Porezi">Porezi</option>
+                    <option value="Investiranje">Investiranje</option>
+                  </optgroup>
+                  <optgroup label="Tehnologija">
+                    <option value="Mobilni Telefoni">Mobilni Telefoni</option>
+                    <option value="Internet priključak">Internet priključak</option>
+                    <option value="Digitalne usluge">Digitalne usluge</option>
+                    <option value="Tech News">Tech News</option>
+                  </optgroup>
+                  <optgroup label="Besplatno">
+                    <option value="Besplatno">Besplatne Usluge</option>
+                    <option value="Besplatni događaji">Besplatni Događaji</option>
+                    <option value="Besplatni resursi">Besplatni Resursi</option>
+                  </optgroup>
+                  <optgroup label="Ostalo">
+                    <option value="Vijesti">Vijesti</option>
+                    <option value="Kviz">Kviz</option>
+                  </optgroup>
                 </select>
               </div>
 
@@ -288,10 +405,10 @@ const AdminEditor=()=> {
               </label>
               <input
                 type="text"
-                value={formData.tags.join(', ')}
-                onChange={(e)=> handleArrayChange('tags',e.target.value)}
+                value={formData.tags.join(',')}
+                onChange={(e) => handleArrayChange('tags', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="putovanja, savjeti, njemačka"
+                placeholder="putovanja,savjeti,njemačka"
               />
             </div>
 
@@ -453,7 +570,7 @@ const AdminEditor=()=> {
               </label>
               <textarea
                 value={formData.terms.join('\n')}
-                onChange={(e)=> handleArrayChange('terms',e.target.value.replace(/\n/g,','))}
+                onChange={(e) => handleArrayChange('terms', e.target.value.replace(/\n/g, ','))}
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="Važi za sve regionalne vozove&#10;Ne važi za ICE vozove&#10;Maksimalno 2 karte po kuponu"
@@ -558,6 +675,20 @@ const AdminEditor=()=> {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                URL slike *
+              </label>
+              <input
+                type="url"
+                name="image"
+                value={formData.image}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Sadržaj vijesti *
               </label>
               <textarea
@@ -630,10 +761,10 @@ const AdminEditor=()=> {
               </label>
               <input
                 type="text"
-                value={formData.tags.join(', ')}
-                onChange={(e)=> handleArrayChange('tags',e.target.value)}
+                value={formData.tags.join(',')}
+                onChange={(e) => handleArrayChange('tags', e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="radna dozvola, dokumenti, viza"
+                placeholder="radna dozvola,dokumenti,viza"
               />
             </div>
           </div>
@@ -767,7 +898,7 @@ const AdminEditor=()=> {
           value={formData.seoKeywords}
           onChange={handleChange}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          placeholder="ključna riječ 1, ključna riječ 2, ključna riječ 3"
+          placeholder="ključna riječ 1,ključna riječ 2,ključna riječ 3"
         />
       </div>
 
@@ -848,6 +979,7 @@ const AdminEditor=()=> {
               placeholder="Naslov za Facebook dijeljenje"
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               OG Opis
@@ -861,6 +993,7 @@ const AdminEditor=()=> {
               placeholder="Opis za Facebook dijeljenje"
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               OG Slika
@@ -894,6 +1027,7 @@ const AdminEditor=()=> {
               placeholder="Naslov za Twitter dijeljenje"
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Twitter Opis
@@ -907,6 +1041,7 @@ const AdminEditor=()=> {
               placeholder="Opis za Twitter dijeljenje"
             />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Twitter Slika
@@ -953,10 +1088,7 @@ const AdminEditor=()=> {
                 className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-gray-700">
-                {lang === 'bs' ? 'Bosanski' : 
-                 lang === 'hr' ? 'Hrvatski' : 
-                 lang === 'sr' ? 'Srpski' : 
-                 lang === 'de' ? 'Njemački' : 'Engleski'}
+                {lang === 'bs' ? 'Bosanski' : lang === 'hr' ? 'Hrvatski' : lang === 'sr' ? 'Srpski' : lang === 'de' ? 'Njemački' : 'Engleski'}
               </span>
             </label>
           ))}
@@ -972,9 +1104,7 @@ const AdminEditor=()=> {
           {formData.languages.filter(lang => lang !== 'bs').map(lang => (
             <div key={lang} className="mb-4">
               <h5 className="font-medium text-gray-900 mb-2">
-                {lang === 'hr' ? 'Hrvatski' : 
-                 lang === 'sr' ? 'Srpski' : 
-                 lang === 'de' ? 'Njemački' : 'Engleski'} prijevod
+                {lang === 'hr' ? 'Hrvatski' : lang === 'sr' ? 'Srpski' : lang === 'de' ? 'Njemački' : 'Engleski'} prijevod
               </h5>
               <textarea
                 placeholder={`Prijevod naslova i sadržaja na ${lang === 'hr' ? 'hrvatski' : lang === 'sr' ? 'srpski' : lang === 'de' ? 'njemački' : 'engleski'}`}
@@ -988,8 +1118,8 @@ const AdminEditor=()=> {
     </div>
   );
 
-  const getEditorTitle=()=> {
-    const titles={
+  const getEditorTitle = () => {
+    const titles = {
       blog: 'Blog Post',
       coupon: 'Kupon',
       news: 'Vijest',
@@ -1002,15 +1132,15 @@ const AdminEditor=()=> {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
-          initial={{opacity: 0, y: 20}}
-          animate={{opacity: 1, y: 0}}
-          transition={{duration: 0.6}}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
               <button
-                onClick={()=> navigate('/admin/dashboard')}
+                onClick={() => navigate('/admin/dashboard')}
                 className="text-gray-600 hover:text-gray-900"
               >
                 <SafeIcon icon={FiArrowLeft} className="w-5 h-5" />
@@ -1019,16 +1149,17 @@ const AdminEditor=()=> {
                 {editId ? 'Uredi' : 'Novi'} {getEditorTitle()}
               </h1>
             </div>
+
             <div className="flex items-center space-x-4">
               <button
-                onClick={()=> setPreview(!preview)}
+                onClick={() => setPreview(!preview)}
                 className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 <SafeIcon icon={FiEye} className="w-4 h-4" />
                 <span>Pregled</span>
               </button>
               <button
-                onClick={()=> handleSave('draft')}
+                onClick={() => handleSave('draft')}
                 disabled={saving}
                 className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg"
               >
@@ -1036,7 +1167,7 @@ const AdminEditor=()=> {
                 <span>Sačuvaj draft</span>
               </button>
               <button
-                onClick={()=> handleSave('pending')}
+                onClick={() => handleSave('pending')}
                 disabled={saving}
                 className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white px-4 py-2 rounded-lg"
               >
@@ -1044,7 +1175,7 @@ const AdminEditor=()=> {
                 <span>Pošalji na odobravanje</span>
               </button>
               <button
-                onClick={()=> handleSave('publish')}
+                onClick={() => handleSave('publish')}
                 disabled={saving}
                 className="flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white px-4 py-2 rounded-lg"
               >
@@ -1057,40 +1188,40 @@ const AdminEditor=()=> {
           {/* Editor Tabs */}
           <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-8">
             <button
-              onClick={()=> setActiveTab('content')}
+              onClick={() => setActiveTab('content')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'content' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                activeTab === 'content'
+                  ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Sadržaj
             </button>
             <button
-              onClick={()=> setActiveTab('seo')}
+              onClick={() => setActiveTab('seo')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'seo' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                activeTab === 'seo'
+                  ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               SEO
             </button>
             <button
-              onClick={()=> setActiveTab('social')}
+              onClick={() => setActiveTab('social')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'social' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                activeTab === 'social'
+                  ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Društvene mreže
             </button>
             <button
-              onClick={()=> setActiveTab('multilingual')}
+              onClick={() => setActiveTab('multilingual')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'multilingual' 
-                  ? 'bg-white text-gray-900 shadow-sm' 
+                activeTab === 'multilingual'
+                  ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
