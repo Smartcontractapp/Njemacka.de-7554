@@ -7,14 +7,14 @@ const SEOHead = ({
   keywords, 
   image, 
   url, 
-  type = 'website',
-  author = 'Njemačka Blog',
-  publishedTime,
-  modifiedTime
+  type = 'website', 
+  author = 'Njemačka Blog', 
+  publishedTime, 
+  modifiedTime 
 }) => {
   const siteTitle = 'Njemačka Blog - Otkrijte Njemačku';
   const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
-  const siteUrl = 'https://njemacka-blog.com';
+  const siteUrl = window.location.origin; // Dynamic site URL
   const fullUrl = url ? `${siteUrl}${url}` : siteUrl;
   const defaultImage = `${siteUrl}/og-image.jpg`;
 
