@@ -5,13 +5,14 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import supabase from '../../lib/supabase';
 
-const { FiSave, FiX, FiArrowLeft, FiImage, FiUpload, FiTrash2, FiAlertCircle, FiShare2, FiTrendingUp, FiTarget, FiEye, FiCheckCircle } = FiIcons;
+const { FiSave, FiX, FiArrowLeft, FiImage, FiUpload, FiTrash2, FiAlertCircle, FiShare2, FiTrendingUp, FiTarget, FiEye } = FiIcons;
 
 const AdminEditor = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editorType = searchParams.get('type') || 'blog';
   const editId = searchParams.get('id');
+  const editCategory = searchParams.get('category');
   
   const [formData, setFormData] = useState({
     title: '',
@@ -37,20 +38,20 @@ const AdminEditor = () => {
     socialHashtags: [],
     // Email marketing
     includeInNewsletter: true,
-    newsletterSegment: 'all',
+    newsletterSegment: 'all', // all, subscribers, premium
     // SEO boost
     submitToSearchEngines: true,
     generateSitemap: true,
     // Specific fields for different content types
-    code: '',
-    discount: '',
-    validUntil: '',
-    company: '',
-    timeLimit: '',
-    terms: [],
-    question: '',
-    answer: '',
-    tags: [],
+    code: '', // For coupons
+    discount: '', // For coupons
+    validUntil: '', // For coupons
+    company: '', // For coupons
+    timeLimit: '', // For coupons
+    terms: [], // For coupons
+    question: '', // For FAQ
+    answer: '', // For FAQ
+    tags: [], // For FAQ
   });
 
   const [errors, setErrors] = useState({});
@@ -59,7 +60,7 @@ const AdminEditor = () => {
   const [currentTerm, setCurrentTerm] = useState('');
   const [currentHashtag, setCurrentHashtag] = useState('');
   const [showPreview, setShowPreview] = useState(false);
-  const [publishSuccess, setPublishSuccess] = useState(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   // Load edit data if available
   useEffect(() => {
@@ -81,16 +82,14 @@ const AdminEditor = () => {
     }
   }, [editId, editorType]);
 
-  // Generate canonical URL from title
+  // Generate canonical URL from title (without domain)
   const generateCanonicalUrl = (title, type) => {
     if (!title) return '';
     
     const slug = title
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single
-      .replace(/(^-|-$)/g, ''); // Remove leading/trailing hyphens
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
     
     const path = type === 'blog' ? 'post' : 
                 type === 'faq' ? 'faq' : 
@@ -112,9 +111,7 @@ const AdminEditor = () => {
     if (name === 'title') {
       const slug = value
         .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
+        .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
       
       setFormData(prev => ({
@@ -123,6 +120,7 @@ const AdminEditor = () => {
         canonicalUrl: generateCanonicalUrl(value, editorType)
       }));
 
+      // Auto-update SEO and social fields if empty
       if (!formData.seoTitle) {
         setFormData(prev => ({ ...prev, seoTitle: value }));
       }
@@ -217,92 +215,6 @@ const AdminEditor = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Save to Supabase
-  const saveToSupabase = async (contentData) => {
-    try {
-      const tableName = `${editorType}_posts_qbx7m9p2k1`;
-      
-      // Create the data object based on content type
-      const dataToSave = {
-        title: contentData.title,
-        slug: contentData.slug,
-        image: contentData.image,
-        category: contentData.category,
-        date: contentData.date,
-        seo_title: contentData.seoTitle,
-        seo_description: contentData.seoDescription,
-        seo_keywords: contentData.seoKeywords,
-        canonical_url: contentData.canonicalUrl,
-        published: contentData.publishImmediately,
-        featured: contentData.featuredOnHomepage,
-        promote_social: contentData.promoteOnSocial,
-        social_title: contentData.socialTitle,
-        social_description: contentData.socialDescription,
-        social_hashtags: contentData.socialHashtags,
-        include_newsletter: contentData.includeInNewsletter,
-        newsletter_segment: contentData.newsletterSegment,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      // Add type-specific fields
-      if (editorType === 'blog' || editorType === 'news') {
-        dataToSave.excerpt = contentData.excerpt;
-        dataToSave.content = contentData.content;
-        dataToSave.urgent = contentData.isUrgent || false;
-        dataToSave.read_time = `${Math.max(1, Math.ceil(contentData.content.split(' ').length / 200))} min čitanja`;
-      }
-
-      if (editorType === 'coupon') {
-        dataToSave.code = contentData.code;
-        dataToSave.discount = contentData.discount;
-        dataToSave.valid_until = contentData.validUntil;
-        dataToSave.company = contentData.company;
-        dataToSave.time_limit = contentData.timeLimit;
-        dataToSave.terms = contentData.terms;
-        dataToSave.featured_coupon = contentData.isFeaturedCoupon;
-        dataToSave.description = contentData.excerpt;
-      }
-
-      if (editorType === 'faq') {
-        dataToSave.question = contentData.question;
-        dataToSave.answer = contentData.answer;
-        dataToSave.tags = contentData.tags;
-        dataToSave.views = 0;
-        dataToSave.helpful = 0;
-        dataToSave.last_updated = new Date().toISOString();
-      }
-
-      let result;
-      if (editId) {
-        // Update existing
-        result = await supabase
-          .from(tableName)
-          .update(dataToSave)
-          .eq('id', editId)
-          .select()
-          .single();
-      } else {
-        // Insert new
-        result = await supabase
-          .from(tableName)
-          .insert([dataToSave])
-          .select()
-          .single();
-      }
-
-      if (result.error) {
-        console.error('Supabase error:', result.error);
-        throw result.error;
-      }
-
-      return result.data;
-    } catch (error) {
-      console.error('Error saving to Supabase:', error);
-      throw error;
-    }
-  };
-
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -312,13 +224,10 @@ const AdminEditor = () => {
     setIsSubmitting(true);
     
     try {
-      // Save to Supabase
-      const savedContent = await saveToSupabase(formData);
+      // Simulate API call to save the content
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      console.log('Content saved successfully:', savedContent);
-      
-      // Show success message
-      setPublishSuccess(true);
+      console.log('Saving content:', formData);
       
       // Simulate promotion activities
       if (formData.promoteOnSocial) {
@@ -342,73 +251,23 @@ const AdminEditor = () => {
         console.log('Submitting to search engines and generating sitemap');
       }
       
-      // Redirect after success
-      setTimeout(() => {
-        navigate('/admin/dashboard');
-      }, 2000);
+      alert(`${editId ? 'Ažuriran' : 'Dodan'} ${
+        editorType === 'blog' ? 'blog post' :
+        editorType === 'news' ? 'vijest' :
+        editorType === 'coupon' ? 'kupon' :
+        editorType === 'faq' ? 'FAQ' : 'sadržaj'
+      }!${formData.promoteOnSocial || formData.includeInNewsletter ? ' Promocija je pokrenuta!' : ''}`);
       
+      navigate('/admin/dashboard');
     } catch (error) {
       console.error('Error saving content:', error);
       setErrors({
-        submit: `Došlo je do greške prilikom spremanja: ${error.message || 'Nepoznata greška'}`
+        submit: 'Došlo je do greške prilikom spremanja. Pokušajte ponovo.'
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  // Success screen
-  if (publishSuccess) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md"
-        >
-          <SafeIcon icon={FiCheckCircle} className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            {editId ? 'Uspješno ažurirano!' : 'Uspješno objavljeno!'}
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Vaš {editorType === 'blog' ? 'blog post' : 
-                 editorType === 'news' ? 'vijest' : 
-                 editorType === 'coupon' ? 'kupon' : 
-                 editorType === 'faq' ? 'FAQ' : 'sadržaj'} je 
-            {formData.publishImmediately ? ' odmah objavljen' : ' spremljen kao draft'}.
-          </p>
-          
-          {formData.promoteOnSocial || formData.includeInNewsletter ? (
-            <div className="bg-blue-50 p-4 rounded-lg mb-6">
-              <p className="text-blue-800 text-sm">
-                📢 Promocija je pokrenuta na:
-              </p>
-              <ul className="text-blue-700 text-sm mt-2">
-                {formData.promoteOnSocial && <li>• Društvene mreže</li>}
-                {formData.includeInNewsletter && <li>• Newsletter</li>}
-                {formData.submitToSearchEngines && <li>• Pretraživači</li>}
-              </ul>
-            </div>
-          ) : null}
-          
-          <div className="flex space-x-3">
-            <button
-              onClick={() => navigate('/admin/dashboard')}
-              className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700"
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => window.open(formData.canonicalUrl, '_blank')}
-              className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50"
-            >
-              Pregled
-            </button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
 
   // Determine the editor title based on type
   const getEditorTitle = () => {
@@ -527,9 +386,25 @@ const AdminEditor = () => {
                     value={formData.title}
                     onChange={handleChange}
                     className={`w-full px-4 py-2 border ${errors.title ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
-                    placeholder="Unesite naslov..."
                   />
                   {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+                </div>
+                
+                {/* Slug */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Slug (URL) *
+                  </label>
+                  <input
+                    type="text"
+                    name="slug"
+                    value={formData.slug}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${errors.slug ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    URL: {formData.canonicalUrl || generateCanonicalUrl(formData.title, editorType)}
+                  </p>
                 </div>
                 
                 {/* Image URL */}
@@ -537,26 +412,41 @@ const AdminEditor = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     URL slike *
                   </label>
-                  <input
-                    type="text"
-                    name="image"
-                    value={formData.image}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 border ${errors.image ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
-                    placeholder="https://images.unsplash.com/photo-..."
-                  />
+                  <div className="flex space-x-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        name="image"
+                        value={formData.image}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-2 border ${errors.image ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                        placeholder="https://example.com/slika.jpg"
+                      />
+                      <SafeIcon icon={FiImage} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    </div>
+                    <button
+                      type="button"
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg"
+                    >
+                      <SafeIcon icon={FiUpload} className="w-5 h-5" />
+                    </button>
+                  </div>
                   {errors.image && <p className="mt-1 text-sm text-red-600">{errors.image}</p>}
                   
                   {formData.image && (
-                    <div className="mt-2">
+                    <div className="mt-2 relative">
                       <img
                         src={formData.image}
                         alt="Preview"
                         className="h-32 object-cover rounded-lg"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
                       />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
+                        className="absolute top-2 right-2 bg-red-600 text-white p-1 rounded-full hover:bg-red-700"
+                      >
+                        <SafeIcon icon={FiTrash2} className="w-4 h-4" />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -573,11 +463,24 @@ const AdminEditor = () => {
                       value={formData.category}
                       onChange={handleChange}
                       className={`w-full px-4 py-2 border ${errors.category ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
-                      placeholder="npr. Putovanja, Kultura, Život..."
                     />
                     {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category}</p>}
                   </div>
                 )}
+                
+                {/* Date */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Datum
+                  </label>
+                  <input
+                    type="text"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
               </div>
               
               {/* Content fields specific to each type */}
@@ -597,7 +500,6 @@ const AdminEditor = () => {
                         onChange={handleChange}
                         rows={2}
                         className={`w-full px-4 py-2 border ${errors.excerpt ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
-                        placeholder="Kratak opis koji će se prikazati u pregledu..."
                       />
                       {errors.excerpt && <p className="mt-1 text-sm text-red-600">{errors.excerpt}</p>}
                     </div>
@@ -610,9 +512,8 @@ const AdminEditor = () => {
                         name="content"
                         value={formData.content}
                         onChange={handleChange}
-                        rows={15}
+                        rows={10}
                         className={`w-full px-4 py-2 border ${errors.content ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
-                        placeholder="Ovdje napišite pun sadržaj vašeg posta..."
                       />
                       {errors.content && <p className="mt-1 text-sm text-red-600">{errors.content}</p>}
                       <p className="mt-1 text-xs text-gray-500">
@@ -636,7 +537,6 @@ const AdminEditor = () => {
                           value={formData.code}
                           onChange={handleChange}
                           className={`w-full px-4 py-2 border ${errors.code ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
-                          placeholder="npr. SAVE20"
                         />
                         {errors.code && <p className="mt-1 text-sm text-red-600">{errors.code}</p>}
                       </div>
@@ -683,10 +583,23 @@ const AdminEditor = () => {
                           value={formData.company}
                           onChange={handleChange}
                           className={`w-full px-4 py-2 border ${errors.company ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
-                          placeholder="npr. Deutsche Bahn"
                         />
                         {errors.company && <p className="mt-1 text-sm text-red-600">{errors.company}</p>}
                       </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Vremensko ograničenje (opcionalno)
+                      </label>
+                      <input
+                        type="text"
+                        name="timeLimit"
+                        value={formData.timeLimit}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="npr. 7 dana"
+                      />
                     </div>
                     
                     <div>
@@ -698,9 +611,47 @@ const AdminEditor = () => {
                         value={formData.excerpt}
                         onChange={handleChange}
                         rows={3}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Opišite kupon i kako se koristi..."
+                        className={`w-full px-4 py-2 border ${errors.excerpt ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
                       />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Uslovi korištenja
+                      </label>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <input
+                          type="text"
+                          value={currentTerm}
+                          onChange={(e) => setCurrentTerm(e.target.value)}
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          placeholder="Dodajte uslov korištenja"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleAddItem('terms', currentTerm, setCurrentTerm)}
+                          className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg"
+                        >
+                          Dodaj
+                        </button>
+                      </div>
+                      
+                      {formData.terms.length > 0 && (
+                        <div className="space-y-2 mt-2">
+                          {formData.terms.map((term, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+                              <span>{term}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveItem('terms', index)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <SafeIcon icon={FiX} className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
@@ -718,7 +669,6 @@ const AdminEditor = () => {
                         value={formData.question}
                         onChange={handleChange}
                         className={`w-full px-4 py-2 border ${errors.question ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
-                        placeholder="Unesite pitanje..."
                       />
                       {errors.question && <p className="mt-1 text-sm text-red-600">{errors.question}</p>}
                     </div>
@@ -733,7 +683,6 @@ const AdminEditor = () => {
                         onChange={handleChange}
                         rows={6}
                         className={`w-full px-4 py-2 border ${errors.answer ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
-                        placeholder="Unesite detaljan odgovor..."
                       />
                       {errors.answer && <p className="mt-1 text-sm text-red-600">{errors.answer}</p>}
                     </div>
@@ -748,13 +697,7 @@ const AdminEditor = () => {
                           value={currentTag}
                           onChange={(e) => setCurrentTag(e.target.value)}
                           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                          placeholder="Dodajte tag i pritisnite Enter"
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddItem('tags', currentTag, setCurrentTag);
-                            }
-                          }}
+                          placeholder="Dodajte tag"
                         />
                         <button
                           type="button"
@@ -788,62 +731,192 @@ const AdminEditor = () => {
                 )}
               </div>
               
-              {/* Publishing Options */}
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Opcije objavljivanja</h3>
+              {/* Social Media Promotion */}
+              <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                    <SafeIcon icon={FiShare2} className="w-5 h-5 text-blue-600" />
+                    <span>Promocija na društvenim mrežama</span>
+                  </h2>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name="promoteOnSocial"
+                      checked={formData.promoteOnSocial}
+                      onChange={handleChange}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700">Omogući promociju</span>
+                  </label>
+                </div>
                 
-                <div className="space-y-4">
-                  <div>
-                    <label className="flex items-center space-x-2">
+                {formData.promoteOnSocial && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Naslov za društvene mreže
+                      </label>
                       <input
-                        type="checkbox"
-                        name="publishImmediately"
-                        checked={formData.publishImmediately}
+                        type="text"
+                        name="socialTitle"
+                        value={formData.socialTitle}
                         onChange={handleChange}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Automatski se koristi naslov posta"
                       />
-                      <span className="text-sm text-gray-700">Objavi odmah</span>
-                    </label>
-                  </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Opis za društvene mreže
+                      </label>
+                      <textarea
+                        name="socialDescription"
+                        value={formData.socialDescription}
+                        onChange={handleChange}
+                        rows={2}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Automatski se koristi kratak opis"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Hashtag-ovi
+                      </label>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <input
+                          type="text"
+                          value={currentHashtag}
+                          onChange={(e) => setCurrentHashtag(e.target.value)}
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          placeholder="Dodajte hashtag (bez #)"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddHashtag}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                        >
+                          Dodaj
+                        </button>
+                      </div>
+                      
+                      {formData.socialHashtags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {formData.socialHashtags.map((hashtag, index) => (
+                            <div key={index} className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-sm flex items-center">
+                              {hashtag}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveHashtag(index)}
+                                className="ml-1 text-blue-500 hover:text-blue-700"
+                              >
+                                <SafeIcon icon={FiX} className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <p className="mt-2 text-xs text-gray-500">
+                        Preporučeni hashtag-ovi: #Njemačka #Blog #Putovanja #Kultura #Život
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              {/* SEO Settings */}
+              <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                  <SafeIcon icon={FiTarget} className="w-5 h-5 text-green-600" />
+                  <span>SEO Podešavanja</span>
+                </h2>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    SEO Naslov
+                  </label>
+                  <input
+                    type="text"
+                    name="seoTitle"
+                    value={formData.seoTitle}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Ako ostavite prazno, koristiće se naslov članka.
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Meta Opis
+                  </label>
+                  <textarea
+                    name="seoDescription"
+                    value={formData.seoDescription}
+                    onChange={handleChange}
+                    rows={2}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Ako ostavite prazno, koristiće se kratak opis članka.
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Meta Ključne riječi
+                  </label>
+                  <input
+                    type="text"
+                    name="seoKeywords"
+                    value={formData.seoKeywords}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Razdvojite zarezom: npr. Njemačka, putovanja, Berlin"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Canonical URL
+                  </label>
+                  <input
+                    type="text"
+                    name="canonicalUrl"
+                    value={formData.canonicalUrl}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Automatski se generiše iz naslova. Mijenjajte samo ako znate što radite.
+                  </p>
+                </div>
+                
+                <div className="flex items-center space-x-4 pt-4 border-t border-gray-200">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name="submitToSearchEngines"
+                      checked={formData.submitToSearchEngines}
+                      onChange={handleChange}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700">Pošalji pretraživačima</span>
+                  </label>
                   
-                  <div>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        name="featuredOnHomepage"
-                        checked={formData.featuredOnHomepage}
-                        onChange={handleChange}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <span className="text-sm text-gray-700">Istakni na početnoj stranici</span>
-                    </label>
-                  </div>
-                  
-                  <div>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        name="promoteOnSocial"
-                        checked={formData.promoteOnSocial}
-                        onChange={handleChange}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <span className="text-sm text-gray-700">Promocija na društvenim mrežama</span>
-                    </label>
-                  </div>
-                  
-                  <div>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        name="includeInNewsletter"
-                        checked={formData.includeInNewsletter}
-                        onChange={handleChange}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <span className="text-sm text-gray-700">Uključi u newsletter</span>
-                    </label>
-                  </div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name="generateSitemap"
+                      checked={formData.generateSitemap}
+                      onChange={handleChange}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700">Ažuriraj sitemap</span>
+                  </label>
                 </div>
               </div>
             </form>
@@ -857,8 +930,9 @@ const AdminEditor = () => {
                 <span>Pregled</span>
               </h2>
               
+              {/* Preview content based on type */}
               <div className="prose max-w-none">
-                <h1>{formData.title || 'Naslov posta'}</h1>
+                <h1>{formData.title}</h1>
                 
                 {formData.image && (
                   <img src={formData.image} alt={formData.title} className="rounded-lg w-full h-auto" />
@@ -868,7 +942,7 @@ const AdminEditor = () => {
                   <>
                     <p className="font-medium text-gray-600">{formData.excerpt}</p>
                     {formData.content.split('\n').map((paragraph, index) => (
-                      paragraph.trim() && <p key={index}>{paragraph}</p>
+                      <p key={index}>{paragraph}</p>
                     ))}
                   </>
                 ) : editorType === 'coupon' ? (
@@ -880,6 +954,16 @@ const AdminEditor = () => {
                       <p><strong>Kompanija:</strong> {formData.company}</p>
                     </div>
                     <p>{formData.excerpt}</p>
+                    {formData.terms.length > 0 && (
+                      <>
+                        <h3>Uslovi korištenja:</h3>
+                        <ul>
+                          {formData.terms.map((term, index) => (
+                            <li key={index}>{term}</li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
                   </>
                 ) : editorType === 'faq' ? (
                   <>
@@ -895,8 +979,20 @@ const AdminEditor = () => {
                       </div>
                     )}
                   </>
-                ) : (
-                  <p className="text-gray-500">Popunite formu da vidite pregled...</p>
+                ) : null}
+                
+                {/* Social Media Preview */}
+                {formData.promoteOnSocial && (
+                  <div className="mt-8 p-4 bg-blue-50 rounded-lg">
+                    <h3 className="text-sm font-semibold text-blue-900 mb-2">Pregled društvenih mreža:</h3>
+                    <div className="bg-white p-3 rounded border">
+                      <h4 className="font-medium text-gray-900">{formData.socialTitle || formData.title}</h4>
+                      <p className="text-gray-600 text-sm mt-1">{formData.socialDescription || formData.excerpt}</p>
+                      {formData.socialHashtags.length > 0 && (
+                        <p className="text-blue-600 text-sm mt-2">{formData.socialHashtags.join(' ')}</p>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -904,27 +1000,132 @@ const AdminEditor = () => {
           
           {/* Sidebar */}
           <div className={`space-y-6 ${showPreview ? 'hidden lg:block' : 'block'}`}>
+            {/* Publishing Options */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Opcije objavljivanja</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name="publishImmediately"
+                      checked={formData.publishImmediately}
+                      onChange={handleChange}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700">Objavi odmah</span>
+                  </label>
+                </div>
+                
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name="featuredOnHomepage"
+                      checked={formData.featuredOnHomepage}
+                      onChange={handleChange}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700">Istakni na početnoj stranici</span>
+                  </label>
+                </div>
+                
+                {editorType === 'news' && (
+                  <div>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="isUrgent"
+                        checked={formData.isUrgent}
+                        onChange={handleChange}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="text-sm text-gray-700">Označi kao hitno</span>
+                    </label>
+                  </div>
+                )}
+                
+                {editorType === 'coupon' && (
+                  <div>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="isFeaturedCoupon"
+                        checked={formData.isFeaturedCoupon}
+                        onChange={handleChange}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="text-sm text-gray-700">Istakni kao poseban popust</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Newsletter Marketing */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                  <SafeIcon icon={FiTrendingUp} className="w-5 h-5 text-purple-600" />
+                  <span>Newsletter marketing</span>
+                </h3>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="includeInNewsletter"
+                    checked={formData.includeInNewsletter}
+                    onChange={handleChange}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">Uključi</span>
+                </label>
+              </div>
+              
+              {formData.includeInNewsletter && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Segment pretplatnika
+                  </label>
+                  <select
+                    name="newsletterSegment"
+                    value={formData.newsletterSegment}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="all">Svi pretplatnici</option>
+                    <option value="subscribers">Osnovni pretplatnici</option>
+                    <option value="premium">Premium pretplatnici</option>
+                  </select>
+                </div>
+              )}
+            </div>
+            
             {/* Quick Help */}
             <div className="bg-blue-50 rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-blue-900 mb-4">Savjeti za {editorType}</h3>
+              <h3 className="text-lg font-semibold text-blue-900 mb-4">Savjeti za promociju</h3>
               
               <div className="space-y-3 text-blue-800">
                 <p className="text-sm">
                   {editorType === 'blog' ? (
-                    '📝 Koristite jasne naslove i podijelite sadržaj u paragrafe. Dodajte relevantne slike.'
+                    'Koristite društvene mreže za dijeljenje blog postova. Dodajte relevantne hashtag-ove za veći doseg.'
                   ) : editorType === 'news' ? (
-                    '📰 Vijesti trebaju biti tačne i ažurne. Dodajte datum i izvor informacije.'
+                    'Hitne vijesti će biti automatski istaknute. Koristite društvene mreže za brže širenje informacija.'
                   ) : editorType === 'coupon' ? (
-                    '🎫 Jasno navedite uslove korištenja i datum isteka kupona.'
+                    'Kuponi se najbolje dijele putem newslettera i društvenih mreža. Dodajte vremensko ograničenje za hitnost.'
                   ) : editorType === 'faq' ? (
-                    '❓ Pitanja trebaju biti jasna, a odgovori detaljni i korisni.'
-                  ) : 'Popunite sva obavezna polja označena sa *'}
+                    'FAQ se automatski indeksira za pretraživanje. Koristite jasne tagove za lakše pronalaženje.'
+                  ) : 'Koristite sve dostupne kanale za maksimalnu vidljivost.'}
+                </p>
+                
+                <p className="text-sm">
+                  SEO optimizacija i društvene mreže rade zajedno za bolju vidljivost vašeg sadržaja.
                 </p>
                 
                 <div className="mt-4 p-3 bg-blue-100 rounded-lg">
                   <h4 className="font-medium text-blue-900 mb-1">Preporučeni hashtag-ovi:</h4>
                   <p className="text-xs text-blue-700">
-                    #Njemačka #Blog #Putovanja #Kultura #Život #Savjeti #Germany
+                    #Njemačka #Blog #Putovanja #Kultura #Život #Savjeti #Tips #Germany
                   </p>
                 </div>
               </div>

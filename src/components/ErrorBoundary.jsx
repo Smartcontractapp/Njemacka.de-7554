@@ -1,6 +1,6 @@
 import React from 'react';
 import * as FiIcons from 'react-icons/fi';
-import SafeIcon from './SafeIcon';
+import SafeIcon from '../common/SafeIcon';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -21,10 +21,7 @@ class ErrorBoundary extends React.Component {
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-lg p-8 max-w-lg w-full text-center">
-            <SafeIcon 
-              icon={FiIcons.FiAlertTriangle} 
-              className="w-16 h-16 text-red-500 mx-auto mb-4" 
-            />
+            <SafeIcon icon={FiIcons.FiAlertTriangle} className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Oops! Nešto je pošlo po zlu
             </h1>

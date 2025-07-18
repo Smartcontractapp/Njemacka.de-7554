@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
@@ -6,23 +6,16 @@ import ReactECharts from 'echarts-for-react';
 import { format, subDays, eachDayOfInterval } from 'date-fns';
 
 const {
-  FiUsers,
-  FiEye,
-  FiTrendingUp,
-  FiBarChart2,
-  FiActivity,
-  FiGlobe,
-  FiClock,
-  FiCalendar,
-  FiRefreshCw,
-  FiDownload,
-  FiFilter,
-  FiMap
+  FiUsers, FiEye, FiTrendingUp, FiBarChart2, FiActivity,
+  FiGlobe, FiClock, FiCalendar, FiRefreshCw, FiDownload,
+  FiFilter, FiMap, FiLayers, FiPieChart, FiHeart, FiMonitor
 } = FiIcons;
 
 const Analytics = () => {
   const [dateRange, setDateRange] = useState('7d');
   const [loading, setLoading] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState('visitors');
+  const [selectedView, setSelectedView] = useState('overview');
 
   // Mock data generation
   const generateMockData = (days) => {
@@ -36,53 +29,66 @@ const Analytics = () => {
       visitors: Math.floor(Math.random() * 1000) + 500,
       pageviews: Math.floor(Math.random() * 2000) + 1000,
       bounceRate: Math.floor(Math.random() * 30) + 40,
-      avgTime: Math.floor(Math.random() * 180) + 120
+      avgTime: Math.floor(Math.random() * 180) + 120,
+      conversions: Math.floor(Math.random() * 50) + 10,
+      revenue: Math.floor(Math.random() * 1000) + 200,
+      newUsers: Math.floor(Math.random() * 300) + 100,
+      sessions: Math.floor(Math.random() * 1500) + 700
     }));
   };
 
   const mockData = generateMockData(dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90);
 
-  // Chart options
-  const visitorChartOption = {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' }
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: mockData.map(d => format(new Date(d.date), 'dd MMM')),
-      axisLabel: { interval: 'auto', rotate: 30 }
-    },
-    yAxis: {
-      type: 'value'
-    },
-    series: [
-      {
-        name: 'Posjetioci',
-        type: 'line',
-        smooth: true,
-        data: mockData.map(d => d.visitors),
-        itemStyle: { color: '#4F46E5' }
-      },
-      {
-        name: 'Pregledi stranica',
-        type: 'line',
-        smooth: true,
-        data: mockData.map(d => d.pageviews),
-        itemStyle: { color: '#10B981' }
-      }
-    ]
+  // Visitor Acquisition Chart
+  const acquisitionData = {
+    organic: 45,
+    direct: 25,
+    social: 15,
+    referral: 10,
+    email: 5
   };
 
-  const bounceRateChartOption = {
+  const pieChartOption = {
     tooltip: {
-      trigger: 'axis'
+      trigger: 'item',
+      formatter: '{b}: {c}%'
+    },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center'
+    },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      label: {
+        show: false
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: '18',
+          fontWeight: 'bold'
+        }
+      },
+      data: Object.entries(acquisitionData).map(([name, value]) => ({
+        name,
+        value
+      }))
+    }]
+  };
+
+  // User Behavior Chart
+  const behaviorChartOption = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    legend: {
+      data: ['Pageviews', 'Avg. Time (sec)']
     },
     grid: {
       left: '3%',
@@ -93,23 +99,81 @@ const Analytics = () => {
     xAxis: {
       type: 'category',
       data: mockData.map(d => format(new Date(d.date), 'dd MMM')),
-      axisLabel: { interval: 'auto', rotate: 30 }
-    },
-    yAxis: {
-      type: 'value',
       axisLabel: {
-        formatter: '{value}%'
+        interval: 'auto',
+        rotate: 30
       }
     },
-    series: [
-      {
-        name: 'Bounce Rate',
-        type: 'line',
-        smooth: true,
-        data: mockData.map(d => d.bounceRate),
-        itemStyle: { color: '#F59E0B' }
+    yAxis: [{
+      type: 'value',
+      name: 'Pageviews'
+    }, {
+      type: 'value',
+      name: 'Time (sec)',
+      splitLine: {
+        show: false
       }
-    ]
+    }],
+    series: [{
+      name: 'Pageviews',
+      type: 'bar',
+      data: mockData.map(d => d.pageviews)
+    }, {
+      name: 'Avg. Time (sec)',
+      type: 'line',
+      yAxisIndex: 1,
+      data: mockData.map(d => d.avgTime)
+    }]
+  };
+
+  // Conversion Funnel Chart
+  const funnelData = [
+    { value: 5000, name: 'Visits' },
+    { value: 3500, name: 'Product Views' },
+    { value: 2200, name: 'Add to Cart' },
+    { value: 1100, name: 'Checkout' },
+    { value: 800, name: 'Purchase' }
+  ];
+
+  const funnelChartOption = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c}'
+    },
+    series: [{
+      type: 'funnel',
+      left: '10%',
+      top: 60,
+      bottom: 60,
+      width: '80%',
+      min: 0,
+      max: 5000,
+      minSize: '0%',
+      maxSize: '100%',
+      sort: 'descending',
+      gap: 2,
+      label: {
+        show: true,
+        position: 'inside'
+      },
+      labelLine: {
+        length: 10,
+        lineStyle: {
+          width: 1,
+          type: 'solid'
+        }
+      },
+      itemStyle: {
+        borderColor: '#fff',
+        borderWidth: 1
+      },
+      emphasis: {
+        label: {
+          fontSize: 20
+        }
+      },
+      data: funnelData
+    }]
   };
 
   const refreshData = () => {
@@ -186,13 +250,13 @@ const Analytics = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Pregledi stranica</p>
+                <p className="text-sm text-gray-500 mb-1">Konverzije</p>
                 <h3 className="text-2xl font-bold text-gray-900">
-                  {mockData.reduce((sum, d) => sum + d.pageviews, 0).toLocaleString()}
+                  {mockData.reduce((sum, d) => sum + d.conversions, 0).toLocaleString()}
                 </h3>
               </div>
               <div className="bg-green-100 p-3 rounded-full">
-                <SafeIcon icon={FiEye} className="w-6 h-6 text-green-600" />
+                <SafeIcon icon={FiActivity} className="w-6 h-6 text-green-600" />
               </div>
             </div>
             <div className="flex items-center mt-4 text-sm">
@@ -210,13 +274,13 @@ const Analytics = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Prosječno vrijeme</p>
+                <p className="text-sm text-gray-500 mb-1">Prihod</p>
                 <h3 className="text-2xl font-bold text-gray-900">
-                  {Math.floor(mockData.reduce((sum, d) => sum + d.avgTime, 0) / mockData.length)}s
+                  {mockData.reduce((sum, d) => sum + d.revenue, 0).toLocaleString()}€
                 </h3>
               </div>
               <div className="bg-blue-100 p-3 rounded-full">
-                <SafeIcon icon={FiClock} className="w-6 h-6 text-blue-600" />
+                <SafeIcon icon={FiBarChart2} className="w-6 h-6 text-blue-600" />
               </div>
             </div>
             <div className="flex items-center mt-4 text-sm">
@@ -234,24 +298,24 @@ const Analytics = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Bounce Rate</p>
+                <p className="text-sm text-gray-500 mb-1">Novi korisnici</p>
                 <h3 className="text-2xl font-bold text-gray-900">
-                  {Math.floor(mockData.reduce((sum, d) => sum + d.bounceRate, 0) / mockData.length)}%
+                  {mockData.reduce((sum, d) => sum + d.newUsers, 0).toLocaleString()}
                 </h3>
               </div>
-              <div className="bg-yellow-100 p-3 rounded-full">
-                <SafeIcon icon={FiBarChart2} className="w-6 h-6 text-yellow-600" />
+              <div className="bg-purple-100 p-3 rounded-full">
+                <SafeIcon icon={FiHeart} className="w-6 h-6 text-purple-600" />
               </div>
             </div>
             <div className="flex items-center mt-4 text-sm">
-              <SafeIcon icon={FiTrendingUp} className="w-4 h-4 text-red-500 mr-1" transform="rotate(180)" />
-              <span className="text-red-500 font-medium">-2.4%</span>
+              <SafeIcon icon={FiTrendingUp} className="w-4 h-4 text-green-500 mr-1" />
+              <span className="text-green-500 font-medium">+10.1%</span>
               <span className="text-gray-500 ml-2">vs prošli period</span>
             </div>
           </motion.div>
         </div>
 
-        {/* Charts */}
+        {/* Main Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -259,8 +323,8 @@ const Analytics = () => {
             transition={{ delay: 0.4 }}
             className="bg-white rounded-xl shadow-sm p-6"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Posjetioci i pregledi stranica</h3>
-            <ReactECharts option={visitorChartOption} style={{ height: '400px' }} />
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Posjetioci i konverzije</h3>
+            <ReactECharts option={behaviorChartOption} style={{ height: '400px' }} />
           </motion.div>
 
           <motion.div
@@ -269,18 +333,29 @@ const Analytics = () => {
             transition={{ delay: 0.5 }}
             className="bg-white rounded-xl shadow-sm p-6"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Bounce Rate</h3>
-            <ReactECharts option={bounceRateChartOption} style={{ height: '400px' }} />
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Izvori saobraćaja</h3>
+            <ReactECharts option={pieChartOption} style={{ height: '400px' }} />
           </motion.div>
         </div>
 
-        {/* Additional Stats */}
+        {/* Conversion Funnel */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-white rounded-xl shadow-sm p-6 mb-8"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 mb-6">Konverzijski lijevak</h3>
+          <ReactECharts option={funnelChartOption} style={{ height: '400px' }} />
+        </motion.div>
+
+        {/* Additional Metrics */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Top Pages */}
+          {/* Popular Pages */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 0.7 }}
             className="bg-white rounded-xl shadow-sm p-6"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Najpopularnije stranice</h3>
@@ -305,31 +380,29 @@ const Analytics = () => {
             </div>
           </motion.div>
 
-          {/* Traffic Sources */}
+          {/* Device Distribution */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
+            transition={{ delay: 0.8 }}
             className="bg-white rounded-xl shadow-sm p-6"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Izvori saobraćaja</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Uređaji</h3>
             <div className="space-y-4">
               {[
-                { source: 'Google', percentage: 45, visits: 15234 },
-                { source: 'Direct', percentage: 25, visits: 8543 },
-                { source: 'Facebook', percentage: 15, visits: 5123 },
-                { source: 'Twitter', percentage: 10, visits: 3412 },
-                { source: 'Others', percentage: 5, visits: 1705 }
-              ].map((source, index) => (
+                { device: 'Mobile', percentage: 65 },
+                { device: 'Desktop', percentage: 30 },
+                { device: 'Tablet', percentage: 5 }
+              ].map((device, index) => (
                 <div key={index}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-900">{source.source}</span>
-                    <span className="text-sm text-gray-500">{source.visits.toLocaleString()} visits</span>
+                    <span className="text-sm text-gray-900">{device.device}</span>
+                    <span className="text-sm text-gray-500">{device.percentage}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-primary-600 h-2 rounded-full"
-                      style={{ width: `${source.percentage}%` }}
+                      style={{ width: `${device.percentage}%` }}
                     />
                   </div>
                 </div>
@@ -337,55 +410,32 @@ const Analytics = () => {
             </div>
           </motion.div>
 
-          {/* Visitor Demographics */}
+          {/* Browser Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
+            transition={{ delay: 0.9 }}
             className="bg-white rounded-xl shadow-sm p-6"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Demografija posjetilaca</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Pretraživači</h3>
             <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Top lokacije</h4>
-                <div className="space-y-2">
-                  {[
-                    { country: 'Njemačka', visitors: 45234 },
-                    { country: 'Bosna i Hercegovina', visitors: 32123 },
-                    { country: 'Hrvatska', visitors: 24532 },
-                    { country: 'Srbija', visitors: 18234 },
-                    { country: 'Austrija', visitors: 12453 }
-                  ].map((location, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-900">{location.country}</span>
-                      <span className="text-sm text-gray-500">{location.visitors.toLocaleString()}</span>
-                    </div>
-                  ))}
+              {[
+                { name: 'Chrome', users: 15234 },
+                { name: 'Safari', users: 8543 },
+                { name: 'Firefox', users: 5123 },
+                { name: 'Edge', users: 3412 },
+                { name: 'Others', users: 1705 }
+              ].map((browser, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <SafeIcon icon={FiMonitor} className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-900">{browser.name}</span>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {browser.users.toLocaleString()} korisnika
+                  </span>
                 </div>
-              </div>
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Uređaji</h4>
-                <div className="space-y-2">
-                  {[
-                    { device: 'Mobile', percentage: 65 },
-                    { device: 'Desktop', percentage: 30 },
-                    { device: 'Tablet', percentage: 5 }
-                  ].map((device, index) => (
-                    <div key={index}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm text-gray-900">{device.device}</span>
-                        <span className="text-sm text-gray-500">{device.percentage}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-primary-600 h-2 rounded-full"
-                          style={{ width: `${device.percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
           </motion.div>
         </div>
