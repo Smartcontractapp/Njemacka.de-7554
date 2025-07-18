@@ -3,7 +3,7 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../../common/SafeIcon';
 import supabase from '../../lib/supabase';
 
-const { FiUser, FiSave, FiRefreshCw, FiCheck, FiX, FiLock } = FiIcons;
+const { FiUser, FiSave, FiRefreshCw, FiCheck, FiX, FiLock, FiDatabase, FiLink } = FiIcons;
 
 const SupabaseLoginConfig = () => {
   const [saving, setSaving] = useState(false);
@@ -21,6 +21,12 @@ const SupabaseLoginConfig = () => {
       preventPasswordReuse: true,
       maxLoginAttempts: 5
     }
+  });
+
+  // Supabase connection info
+  const [connectionInfo, setConnectionInfo] = useState({
+    projectUrl: supabase.supabaseUrl || '',
+    anonKey: supabase.supabaseKey || ''
   });
 
   // Load existing settings on component mount
@@ -77,7 +83,7 @@ const SupabaseLoginConfig = () => {
     try {
       // First, ensure the table exists
       const { error: createError } = await supabase.rpc('create_auth_settings_table', {});
-      
+
       // If RPC doesn't exist, try direct table creation (this might fail due to permissions)
       if (createError) {
         console.log('RPC not available, trying direct insert');
@@ -127,6 +133,36 @@ const SupabaseLoginConfig = () => {
       <div className="flex items-center space-x-2 mb-6">
         <SafeIcon icon={FiUser} className="w-5 h-5 text-primary-600" />
         <h3 className="text-lg font-semibold text-gray-900">Authentication Settings</h3>
+      </div>
+
+      {/* Supabase Connection Info */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <h4 className="text-sm font-medium text-gray-900 flex items-center mb-3">
+          <SafeIcon icon={FiDatabase} className="w-4 h-4 mr-2 text-primary-600" />
+          Supabase Connection
+        </h4>
+        <div className="space-y-3">
+          <div className="flex items-start">
+            <span className="text-sm font-medium text-gray-700 w-24">Project URL:</span>
+            <div className="flex-1 break-all text-sm text-gray-600">{supabase.supabaseUrl}</div>
+          </div>
+          <div className="flex items-start">
+            <span className="text-sm font-medium text-gray-700 w-24">Anon Key:</span>
+            <div className="flex-1 break-all text-sm text-gray-600">
+              {supabase.supabaseKey?.substring(0, 20)}...
+            </div>
+          </div>
+          <div className="flex items-start">
+            <span className="text-sm font-medium text-gray-700 w-24">Project ID:</span>
+            <div className="flex-1 break-all text-sm text-gray-600">
+              {supabase.supabaseUrl?.split('https://')[1]?.split('.')[0] || 'Not available'}
+            </div>
+          </div>
+          <div className="flex items-center mt-2">
+            <SafeIcon icon={FiLink} className="w-4 h-4 mr-2 text-green-600" />
+            <span className="text-sm text-green-600 font-medium">Connected</span>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -249,13 +285,15 @@ const SupabaseLoginConfig = () => {
                 min="1"
                 max="10"
                 value={config.securityPolicies.maxLoginAttempts}
-                onChange={(e) => setConfig(prev => ({
-                  ...prev,
-                  securityPolicies: {
-                    ...prev.securityPolicies,
-                    maxLoginAttempts: parseInt(e.target.value) || 5
-                  }
-                }))}
+                onChange={(e) =>
+                  setConfig(prev => ({
+                    ...prev,
+                    securityPolicies: {
+                      ...prev.securityPolicies,
+                      maxLoginAttempts: parseInt(e.target.value) || 5
+                    }
+                  }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
@@ -269,10 +307,12 @@ const SupabaseLoginConfig = () => {
                 min="300"
                 max="86400"
                 value={config.jwtExpiry}
-                onChange={(e) => setConfig(prev => ({
-                  ...prev,
-                  jwtExpiry: e.target.value
-                }))}
+                onChange={(e) =>
+                  setConfig(prev => ({
+                    ...prev,
+                    jwtExpiry: e.target.value
+                  }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
@@ -281,14 +321,13 @@ const SupabaseLoginConfig = () => {
 
         {/* Status Message */}
         {status && (
-          <div className={`p-4 rounded-lg ${
-            status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-          }`}>
+          <div
+            className={`p-4 rounded-lg ${
+              status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            }`}
+          >
             <div className="flex items-center space-x-2">
-              <SafeIcon 
-                icon={status.type === 'success' ? FiCheck : FiX} 
-                className="w-5 h-5" 
-              />
+              <SafeIcon icon={status.type === 'success' ? FiCheck : FiX} className="w-5 h-5" />
               <span>{status.message}</span>
             </div>
           </div>
@@ -320,8 +359,7 @@ const SupabaseLoginConfig = () => {
             <div>
               <h4 className="text-sm font-medium text-blue-900">Security Note</h4>
               <p className="text-sm text-blue-700 mt-1">
-                These settings affect how users can sign up and authenticate with your application. 
-                Make sure to choose secure options that match your security requirements.
+                These settings affect how users can sign up and authenticate with your application. Make sure to choose secure options that match your security requirements.
               </p>
             </div>
           </div>

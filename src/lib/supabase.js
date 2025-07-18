@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
 // Project ID will be auto-injected during deployment
-const SUPABASE_URL = 'https://bbwpxmquzrrkonyjfngj.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid3B4bXF1enJya29ueWpmbmdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NjM1MDIsImV4cCI6MjA2ODMzOTUwMn0.sBSgNYdCYWO1vM4is7ZkA91AobpwjfuU0i6ztaGwhTM'
+const SUPABASE_URL = 'https://zetrxaqonasnflosckog.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpldHJ4YXFvbmFzbmZsb3Nja29nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3ODQ5MDUsImV4cCI6MjA2ODM2MDkwNX0.t5IkDMdhS6kgwY95ZMk0-7PBIzdo0JlNbJzNhiyCAUc'
 
 if(SUPABASE_URL == 'https://<PROJECT-ID>.supabase.co' || SUPABASE_ANON_KEY == '<ANON_KEY>' ){
   throw new Error('Missing Supabase variables');

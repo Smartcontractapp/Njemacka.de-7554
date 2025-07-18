@@ -1,6 +1,6 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
-import {motion} from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import SEOHead from '../components/SEOHead';
@@ -11,30 +11,34 @@ import FAQCard from '../components/FAQCard';
 import ClassifiedsSection from '../components/ClassifiedsSection';
 import DatingSection from '../components/DatingSection';
 import ServiceCard from '../components/ServiceCard';
-import {blogPosts} from '../data/blogPosts';
-import {coupons} from '../data/coupons';
-import {dailyNews} from '../data/news';
-import {faqData} from '../data/faq';
-import {classifiedAds} from '../data/classifiedAds';
-import {datingProfiles} from '../data/datingProfiles';
-import {services, getFeaturedServices} from '../data/services';
 
-const {FiArrowRight,FiTrendingUp,FiTag,FiRss,FiHelpCircle,FiGift,FiCreditCard,FiDollarSign,FiHeart,FiSmartphone,FiWifi,FiMapPin,FiCheckSquare,FiBookOpen,FiCheck,FiAward,FiStar,FiBriefcase,FiUsers,FiGlobe,FiShield}=FiIcons;
+// Import hooks for Supabase data
+import { useNews, useBlogPosts, useCoupons, useFAQ } from '../hooks/useSupabaseData';
 
-const Home=()=> {
-  const featuredPosts=blogPosts.slice(0,3);
-  const featuredCoupons=coupons.filter(coupon=> coupon.featured).slice(0,3);
-  const latestNews=dailyNews.slice(0,3);
-  const popularFAQ=faqData.filter(faq=> faq.views > 1000).slice(0,3);
-  
-  // Jeftina Putovanja posts
-  const travelPosts=blogPosts.filter(post=> post.category==='Jeftina Putovanja').slice(0,3);
-  
-  // Approved classified ads
-  const approvedAds=classifiedAds.filter(ad=> ad.status==='approved');
+// Import fallback data
+import { classifiedAds } from '../data/classifiedAds';
+import { datingProfiles } from '../data/datingProfiles';
+import { services, getFeaturedServices } from '../data/services';
 
-  // Featured services for business directory
-  const featuredServices = getFeaturedServices().slice(0,3);
+const {
+  FiArrowRight, FiTrendingUp, FiTag, FiRss, FiHelpCircle, FiGift, FiCreditCard,
+  FiDollarSign, FiHeart, FiSmartphone, FiWifi, FiMapPin, FiCheckSquare, FiBookOpen,
+  FiCheck, FiAward, FiStar, FiBriefcase, FiUsers, FiGlobe, FiShield
+} = FiIcons;
+
+const Home = () => {
+  // Fetch data from Supabase
+  const { news: latestNews, loading: newsLoading } = useNews({ limit: 3 });
+  const { posts: featuredPosts, loading: postsLoading } = useBlogPosts({ featured: true, limit: 3 });
+  const { coupons: featuredCoupons, loading: couponsLoading } = useCoupons({ featured: true, limit: 3 });
+  const { faq: popularFAQ, loading: faqLoading } = useFAQ({ limit: 3 });
+
+  // Travel posts from blog posts
+  const { posts: travelPosts } = useBlogPosts({ category: 'jeftina-putovanja', limit: 3 });
+
+  // Fallback data
+  const approvedAds = classifiedAds.filter(ad => ad.status === 'approved');
+  const featuredServices = getFeaturedServices().slice(0, 3);
 
   return (
     <>
@@ -50,9 +54,9 @@ const Home=()=> {
         <section className="relative bg-gradient-to-r from-primary-600 to-primary-800 text-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <motion.div
-              initial={{opacity: 0, y: 20}}
-              animate={{opacity: 1, y: 0}}
-              transition={{duration: 0.8}}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
               className="text-center"
             >
               {/* Prvi red buttona */}
@@ -87,6 +91,7 @@ const Home=()=> {
                   <span>FAQ i savjeti</span>
                 </Link>
               </div>
+
               {/* Drugi red buttona */}
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
                 <Link
@@ -118,6 +123,7 @@ const Home=()=> {
                   <span>Zdravstveno osiguranje</span>
                 </Link>
               </div>
+
               {/* Treći red buttona */}
               <div className="flex flex-col sm:flex-row gap-2 justify-center mt-2">
                 <Link
@@ -143,9 +149,9 @@ const Home=()=> {
         <section className="py-12 bg-blue-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
-              initial={{opacity: 0, y: 20}}
-              whileInView={{opacity: 1, y: 0}}
-              transition={{duration: 0.6}}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
               className="flex items-center justify-between mb-8"
             >
               <div>
@@ -165,11 +171,24 @@ const Home=()=> {
                 <SafeIcon icon={FiArrowRight} className="w-4 h-4" />
               </Link>
             </motion.div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {latestNews.map((news, index) => (
-                <NewsCard key={news.id} news={news} delay={index * 0.1} />
-              ))}
-            </div>
+
+            {newsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl shadow-sm p-6 animate-pulse">
+                    <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {latestNews.map((news, index) => (
+                  <NewsCard key={news.id} news={news} delay={index * 0.1} />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -177,9 +196,9 @@ const Home=()=> {
         <section className="py-16 bg-red-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
-              initial={{opacity: 0, y: 20}}
-              whileInView={{opacity: 1, y: 0}}
-              transition={{duration: 0.6}}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
               className="flex items-center justify-between mb-12"
             >
               <div>
@@ -199,11 +218,24 @@ const Home=()=> {
                 <SafeIcon icon={FiArrowRight} className="w-4 h-4" />
               </Link>
             </motion.div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredCoupons.map((coupon, index) => (
-                <CouponCard key={coupon.id} coupon={coupon} delay={index * 0.1} />
-              ))}
-            </div>
+
+            {couponsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl shadow-sm p-6 animate-pulse">
+                    <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {featuredCoupons.map((coupon, index) => (
+                  <CouponCard key={coupon.id} coupon={coupon} delay={index * 0.1} />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -212,9 +244,9 @@ const Home=()=> {
           <section className="py-16 bg-orange-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <motion.div
-                initial={{opacity: 0, y: 20}}
-                whileInView={{opacity: 1, y: 0}}
-                transition={{duration: 0.6}}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
                 className="flex items-center justify-between mb-12"
               >
                 <div>
@@ -243,13 +275,13 @@ const Home=()=> {
           </section>
         )}
 
-        {/* Local Business Directory Section - UPDATED TITLE AND REMOVED SPECIFIC FEATURES */}
+        {/* Local Business Directory Section */}
         <section className="py-16 bg-purple-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
-              initial={{opacity: 0, y: 20}}
-              whileInView={{opacity: 1, y: 0}}
-              transition={{duration: 0.6}}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
               className="text-center mb-12"
             >
               <div className="inline-flex items-center justify-center p-2 bg-purple-100 rounded-full mb-4">
@@ -265,7 +297,6 @@ const Home=()=> {
 
             {/* Featured Services */}
             <div className="mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Izdvojene usluge</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {featuredServices.map((service, index) => (
                   <ServiceCard key={service.id} service={service} delay={index * 0.1} />
@@ -273,7 +304,7 @@ const Home=()=> {
               </div>
             </div>
 
-            {/* Categories Grid */}
+            {/* Categories Grid and CTA remain the same */}
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
               {[
                 { name: 'Doktori', icon: FiHeart, color: 'text-red-600 bg-red-100', link: '/services?category=doktori' },
@@ -285,9 +316,9 @@ const Home=()=> {
               ].map((category, index) => (
                 <motion.div
                   key={category.name}
-                  initial={{opacity: 0, y: 20}}
-                  whileInView={{opacity: 1, y: 0}}
-                  transition={{duration: 0.6, delay: index * 0.1}}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
                 >
                   <Link
                     to={category.link}
@@ -302,10 +333,9 @@ const Home=()=> {
               ))}
             </div>
 
-            {/* CTA Section */}
+            {/* CTA Section remains the same */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Leva strana - Sadržaj */}
                 <div className="p-8 lg:p-12">
                   <h3 className="text-2xl font-bold text-gray-900 mb-4">
                     Pronađite pouzdane usluge u vašem gradu
@@ -313,8 +343,6 @@ const Home=()=> {
                   <p className="text-gray-600 mb-6 leading-relaxed">
                     Naš direktorij povezuje vas sa verifikovanim firmama koje govore vaš jezik. Od doktora i zubara do pravnika i restorana - sve što vam treba na jednom mjestu.
                   </p>
-
-                  {/* Karakteristike */}
                   <div className="space-y-4 mb-8">
                     <div className="flex items-start space-x-3">
                       <div className="bg-purple-100 p-1 rounded-full mt-1">
@@ -344,8 +372,6 @@ const Home=()=> {
                       </div>
                     </div>
                   </div>
-
-                  {/* CTA Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4">
                     <Link
                       to="/services"
@@ -363,11 +389,8 @@ const Home=()=> {
                     </Link>
                   </div>
                 </div>
-
-                {/* Desna strana - Visual */}
                 <div className="relative bg-gradient-to-br from-purple-200 to-purple-300 p-8 lg:p-12">
                   <div className="relative">
-                    {/* Mock business card */}
                     <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-2">
@@ -407,8 +430,6 @@ const Home=()=> {
                         </button>
                       </div>
                     </div>
-
-                    {/* Statistike */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-white/80 backdrop-blur rounded-xl p-4 text-center">
                         <div className="text-2xl font-bold text-purple-600">15+</div>
@@ -419,8 +440,6 @@ const Home=()=> {
                         <div className="text-sm text-gray-600">Firmi</div>
                       </div>
                     </div>
-
-                    {/* Floating elements */}
                     <div className="absolute -top-4 -right-4 bg-purple-500 text-white p-3 rounded-full shadow-lg">
                       <SafeIcon icon={FiBriefcase} className="w-6 h-6" />
                     </div>
@@ -438,9 +457,9 @@ const Home=()=> {
         <section className="py-16 bg-gradient-to-br from-yellow-50 to-yellow-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
-              initial={{opacity: 0, y: 20}}
-              whileInView={{opacity: 1, y: 0}}
-              transition={{duration: 0.6}}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
               className="text-center mb-12"
             >
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center space-x-3">
@@ -453,7 +472,6 @@ const Home=()=> {
             </motion.div>
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Leva strana - Sadržaj */}
                 <div className="p-8 lg:p-12">
                   <div className="flex items-center space-x-2 mb-6">
                     <div className="bg-yellow-100 p-2 rounded-full">
@@ -469,8 +487,6 @@ const Home=()=> {
                   <p className="text-gray-600 mb-6 leading-relaxed">
                     Naš interaktivni kviz je savršen način da testirate svoje znanje njemačkog jezika. Pitanja su na bosanskom jeziku, a odgovori na njemačkom - idealno za učenje novih riječi i fraza.
                   </p>
-
-                  {/* Karakteristike kviza */}
                   <div className="space-y-4 mb-8">
                     <div className="flex items-start space-x-3">
                       <div className="bg-yellow-100 p-1 rounded-full mt-1">
@@ -500,8 +516,6 @@ const Home=()=> {
                       </div>
                     </div>
                   </div>
-
-                  {/* CTA Buttons */}
                   <div className="space-y-3">
                     <Link
                       to="/quiz"
@@ -516,11 +530,8 @@ const Home=()=> {
                     </p>
                   </div>
                 </div>
-
-                {/* Desna strana - Slika i preview */}
                 <div className="relative bg-gradient-to-br from-yellow-200 to-yellow-300 p-8 lg:p-12">
                   <div className="relative">
-                    {/* Mock quiz preview */}
                     <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
                       <div className="flex items-center justify-between mb-4">
                         <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
@@ -548,8 +559,6 @@ const Home=()=> {
                         </p>
                       </div>
                     </div>
-
-                    {/* Statistike */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-white/80 backdrop-blur rounded-xl p-4 text-center">
                         <div className="text-2xl font-bold text-yellow-600">12+</div>
@@ -560,8 +569,6 @@ const Home=()=> {
                         <div className="text-sm text-gray-600">Pitanja</div>
                       </div>
                     </div>
-
-                    {/* Floating elements */}
                     <div className="absolute -top-4 -right-4 bg-yellow-500 text-white p-3 rounded-full shadow-lg">
                       <SafeIcon icon={FiAward} className="w-6 h-6" />
                     </div>
@@ -572,8 +579,6 @@ const Home=()=> {
                 </div>
               </div>
             </div>
-
-            {/* Dodatne informacije */}
             <div className="mt-8 text-center">
               <div className="inline-flex items-center space-x-6 bg-white rounded-2xl px-8 py-4 shadow-sm">
                 <div className="flex items-center space-x-2 text-gray-600">
@@ -595,13 +600,13 @@ const Home=()=> {
           </div>
         </section>
 
-        {/* Popular FAQ Section - MOVED HERE */}
+        {/* Popular FAQ Section */}
         <section className="py-16 bg-green-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
-              initial={{opacity: 0, y: 20}}
-              whileInView={{opacity: 1, y: 0}}
-              transition={{duration: 0.6}}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
               className="flex items-center justify-between mb-12"
             >
               <div>
@@ -621,11 +626,24 @@ const Home=()=> {
                 <SafeIcon icon={FiArrowRight} className="w-4 h-4" />
               </Link>
             </motion.div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {popularFAQ.map((faq, index) => (
-                <FAQCard key={faq.id} faq={faq} delay={index * 0.1} />
-              ))}
-            </div>
+
+            {faqLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl shadow-sm p-6 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {popularFAQ.map((faq, index) => (
+                  <FAQCard key={faq.id} faq={faq} delay={index * 0.1} />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -639,9 +657,9 @@ const Home=()=> {
         <section className="py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
-              initial={{opacity: 0, y: 20}}
-              whileInView={{opacity: 1, y: 0}}
-              transition={{duration: 0.6}}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
               className="text-center mb-12"
             >
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -651,11 +669,25 @@ const Home=()=> {
                 Naši najpopularniji i najzanimljiviji članci o Njemačkoj
               </p>
             </motion.div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredPosts.map((post, index) => (
-                <BlogCard key={post.id} post={post} delay={index * 0.1} />
-              ))}
-            </div>
+
+            {postsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl shadow-sm p-6 animate-pulse">
+                    <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {featuredPosts.map((post, index) => (
+                  <BlogCard key={post.id} post={post} delay={index * 0.1} />
+                ))}
+              </div>
+            )}
+
             <div className="text-center mt-12">
               <Link
                 to="/category/jeftina-putovanja"
@@ -672,9 +704,9 @@ const Home=()=> {
         <section className="py-16 bg-primary-600 text-white">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <motion.div
-              initial={{opacity: 0, y: 20}}
-              whileInView={{opacity: 1, y: 0}}
-              transition={{duration: 0.6}}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
             >
               <h2 className="text-3xl font-bold mb-4">Pretplatite se na naš newsletter</h2>
               <p className="text-xl text-primary-100 mb-6">
