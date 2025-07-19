@@ -5,7 +5,7 @@ import SafeIcon from '../common/SafeIcon';
 
 const { FiCreditCard, FiLock, FiCalendar, FiShield, FiCheckCircle, FiAlertTriangle, FiInfo } = FiIcons;
 
-const CheckoutForm = ({ total, onSubmit }) => {
+const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -20,7 +20,6 @@ const CheckoutForm = ({ total, onSubmit }) => {
     saveInfo: false
   });
   const [errors, setErrors] = useState({});
-  const [processing, setProcessing] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,6 +27,7 @@ const CheckoutForm = ({ total, onSubmit }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
@@ -36,6 +36,7 @@ const CheckoutForm = ({ total, onSubmit }) => {
 
   const validateStep1 = () => {
     const newErrors = {};
+    
     if (!formData.name.trim()) newErrors.name = 'Ime je obavezno';
     if (!formData.email.trim()) {
       newErrors.email = 'Email je obavezan';
@@ -45,13 +46,14 @@ const CheckoutForm = ({ total, onSubmit }) => {
     if (!formData.address.trim()) newErrors.address = 'Adresa je obavezna';
     if (!formData.city.trim()) newErrors.city = 'Grad je obavezan';
     if (!formData.postalCode.trim()) newErrors.postalCode = 'Poštanski broj je obavezan';
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const validateStep2 = () => {
     const newErrors = {};
+    
     if (!formData.cardName.trim()) newErrors.cardName = 'Ime na kartici je obavezno';
     if (!formData.cardNumber.trim()) {
       newErrors.cardNumber = 'Broj kartice je obavezan';
@@ -68,7 +70,7 @@ const CheckoutForm = ({ total, onSubmit }) => {
     } else if (!/^\d{3}$/.test(formData.cvv)) {
       newErrors.cvv = 'CVV mora imati 3 broja';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -82,17 +84,8 @@ const CheckoutForm = ({ total, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateStep2()) return;
-
-    setProcessing(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      onSubmit(formData);
-    } catch (error) {
-      setErrors({ submit: 'Došlo je do greške prilikom obrade plaćanja. Molimo pokušajte ponovo.' });
-    } finally {
-      setProcessing(false);
-    }
+    
+    onSubmit(formData);
   };
 
   const formatCardNumber = (value) => {
@@ -184,6 +177,7 @@ const CheckoutForm = ({ total, onSubmit }) => {
                 />
                 {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city}</p>}
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Poštanski broj *
@@ -228,13 +222,6 @@ const CheckoutForm = ({ total, onSubmit }) => {
             animate={{ opacity: 1, x: 0 }}
             className="space-y-4"
           >
-            {errors.submit && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center space-x-2">
-                <SafeIcon icon={FiAlertTriangle} className="w-5 h-5 flex-shrink-0" />
-                <p>{errors.submit}</p>
-              </div>
-            )}
-
             <div className="bg-primary-50 p-4 rounded-lg mb-6">
               <div className="flex items-center space-x-2 text-primary-700">
                 <SafeIcon icon={FiLock} className="w-5 h-5" />
@@ -337,10 +324,10 @@ const CheckoutForm = ({ total, onSubmit }) => {
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={processing}
+                disabled={isProcessing}
                 className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
               >
-                {processing ? (
+                {isProcessing ? (
                   <>
                     <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
                     <span>Obrađuje se...</span>

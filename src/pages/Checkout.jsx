@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import CheckoutForm from '../components/CheckoutForm';
 import OrderSummary from '../components/OrderSummary';
 
-const { FiArrowLeft, FiShoppingBag } = FiIcons;
+const { FiArrowLeft, FiShoppingBag, FiLock } = FiIcons;
 
 const Checkout = () => {
+  const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
+  
   // Example order data
   const [orderData] = useState({
     items: [
@@ -32,9 +35,19 @@ const Checkout = () => {
     discount: 10
   });
 
-  const handleSubmit = (formData) => {
-    console.log('Processing payment:', formData);
-    // Handle payment processing here
+  const handleSubmit = async (formData) => {
+    setIsProcessing(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Redirect to success page
+      navigate('/checkout/success');
+    } catch (error) {
+      console.error('Payment error:', error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -49,7 +62,7 @@ const Checkout = () => {
             <SafeIcon icon={FiArrowLeft} className="w-4 h-4" />
             <span>Nazad na korpu</span>
           </Link>
-
+          
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <SafeIcon icon={FiShoppingBag} className="w-8 h-8 text-primary-600" />
@@ -58,6 +71,14 @@ const Checkout = () => {
             <p className="text-gray-600">
               Završite vašu kupovinu sigurno i jednostavno
             </p>
+          </div>
+        </div>
+
+        {/* Security Badge */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <div className="flex items-center justify-center space-x-2 bg-green-50 text-green-700 px-4 py-2 rounded-lg">
+            <SafeIcon icon={FiLock} className="w-5 h-5" />
+            <span className="text-sm font-medium">Sigurno plaćanje sa SSL enkripcijom</span>
           </div>
         </div>
 
@@ -73,6 +94,7 @@ const Checkout = () => {
               <CheckoutForm 
                 total={orderData.subtotal + orderData.shipping - orderData.discount}
                 onSubmit={handleSubmit}
+                isProcessing={isProcessing}
               />
             </motion.div>
 
@@ -87,6 +109,7 @@ const Checkout = () => {
                 subtotal={orderData.subtotal}
                 shipping={orderData.shipping}
                 discount={orderData.discount}
+                isProcessing={isProcessing}
               />
             </motion.div>
           </div>
