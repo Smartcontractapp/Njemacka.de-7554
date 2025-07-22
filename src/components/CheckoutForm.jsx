@@ -3,7 +3,10 @@ import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiCreditCard, FiLock, FiCalendar, FiShield, FiCheckCircle, FiAlertTriangle, FiInfo } = FiIcons;
+const { 
+  FiCreditCard, FiLock, FiCalendar, FiShield,
+  FiCheckCircle, FiAlertTriangle, FiInfo
+} = FiIcons;
 
 const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
   const [step, setStep] = useState(1);
@@ -36,7 +39,6 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
 
   const validateStep1 = () => {
     const newErrors = {};
-    
     if (!formData.name.trim()) newErrors.name = 'Ime je obavezno';
     if (!formData.email.trim()) {
       newErrors.email = 'Email je obavezan';
@@ -53,7 +55,6 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
 
   const validateStep2 = () => {
     const newErrors = {};
-    
     if (!formData.cardName.trim()) newErrors.cardName = 'Ime na kartici je obavezno';
     if (!formData.cardNumber.trim()) {
       newErrors.cardNumber = 'Broj kartice je obavezan';
@@ -84,7 +85,6 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateStep2()) return;
-    
     onSubmit(formData);
   };
 
@@ -100,14 +100,18 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
       {/* Progress Steps */}
       <div className="flex items-center justify-between mb-8">
         <div className={`flex items-center ${step >= 1 ? 'text-primary-600' : 'text-gray-400'}`}>
-          <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${step >= 1 ? 'border-primary-600' : 'border-gray-300'}`}>
+          <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+            step >= 1 ? 'border-primary-600' : 'border-gray-300'
+          }`}>
             <span className="text-sm font-medium">1</span>
           </div>
           <span className="ml-2 text-sm font-medium">Detalji</span>
         </div>
         <div className={`h-px w-16 ${step >= 2 ? 'bg-primary-600' : 'bg-gray-200'}`} />
         <div className={`flex items-center ${step >= 2 ? 'text-primary-600' : 'text-gray-400'}`}>
-          <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${step >= 2 ? 'border-primary-600' : 'border-gray-300'}`}>
+          <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+            step >= 2 ? 'border-primary-600' : 'border-gray-300'
+          }`}>
             <span className="text-sm font-medium">2</span>
           </div>
           <span className="ml-2 text-sm font-medium">Plaćanje</span>
@@ -130,9 +134,13 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                className={`w-full px-4 py-2 border ${
+                  errors.name ? 'border-red-300' : 'border-gray-300'
+                } rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
               />
-              {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+              )}
             </div>
 
             <div>
@@ -144,9 +152,13 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                className={`w-full px-4 py-2 border ${
+                  errors.email ? 'border-red-300' : 'border-gray-300'
+                } rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
               />
-              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              )}
             </div>
 
             <div>
@@ -158,9 +170,13 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border ${errors.address ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                className={`w-full px-4 py-2 border ${
+                  errors.address ? 'border-red-300' : 'border-gray-300'
+                } rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
               />
-              {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
+              {errors.address && (
+                <p className="mt-1 text-sm text-red-600">{errors.address}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -173,9 +189,13 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
                   name="city"
                   value={formData.city}
                   onChange={handleChange}
-                  className={`w-full px-4 py-2 border ${errors.city ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                  className={`w-full px-4 py-2 border ${
+                    errors.city ? 'border-red-300' : 'border-gray-300'
+                  } rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
                 />
-                {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city}</p>}
+                {errors.city && (
+                  <p className="mt-1 text-sm text-red-600">{errors.city}</p>
+                )}
               </div>
 
               <div>
@@ -187,9 +207,13 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
                   name="postalCode"
                   value={formData.postalCode}
                   onChange={handleChange}
-                  className={`w-full px-4 py-2 border ${errors.postalCode ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                  className={`w-full px-4 py-2 border ${
+                    errors.postalCode ? 'border-red-300' : 'border-gray-300'
+                  } rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
                 />
-                {errors.postalCode && <p className="mt-1 text-sm text-red-600">{errors.postalCode}</p>}
+                {errors.postalCode && (
+                  <p className="mt-1 text-sm text-red-600">{errors.postalCode}</p>
+                )}
               </div>
             </div>
 
@@ -238,9 +262,13 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
                 name="cardName"
                 value={formData.cardName}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border ${errors.cardName ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                className={`w-full px-4 py-2 border ${
+                  errors.cardName ? 'border-red-300' : 'border-gray-300'
+                } rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
               />
-              {errors.cardName && <p className="mt-1 text-sm text-red-600">{errors.cardName}</p>}
+              {errors.cardName && (
+                <p className="mt-1 text-sm text-red-600">{errors.cardName}</p>
+              )}
             </div>
 
             <div>
@@ -253,10 +281,14 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
                   name="cardNumber"
                   value={formData.cardNumber}
                   onChange={(e) => {
-                    const formatted = formatCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16));
+                    const formatted = formatCardNumber(
+                      e.target.value.replace(/\D/g, '').slice(0, 16)
+                    );
                     setFormData(prev => ({ ...prev, cardNumber: formatted }));
                   }}
-                  className={`w-full px-4 py-2 pl-10 border ${errors.cardNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                  className={`w-full px-4 py-2 pl-10 border ${
+                    errors.cardNumber ? 'border-red-300' : 'border-gray-300'
+                  } rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
                   placeholder="4111 1111 1111 1111"
                 />
                 <SafeIcon
@@ -264,7 +296,9 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                 />
               </div>
-              {errors.cardNumber && <p className="mt-1 text-sm text-red-600">{errors.cardNumber}</p>}
+              {errors.cardNumber && (
+                <p className="mt-1 text-sm text-red-600">{errors.cardNumber}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -286,14 +320,18 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
                     }}
                     placeholder="MM/YY"
                     maxLength="5"
-                    className={`w-full px-4 py-2 pl-10 border ${errors.expiryDate ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                    className={`w-full px-4 py-2 pl-10 border ${
+                      errors.expiryDate ? 'border-red-300' : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
                   />
                   <SafeIcon
                     icon={FiCalendar}
                     className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                   />
                 </div>
-                {errors.expiryDate && <p className="mt-1 text-sm text-red-600">{errors.expiryDate}</p>}
+                {errors.expiryDate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.expiryDate}</p>
+                )}
               </div>
 
               <div>
@@ -310,14 +348,18 @@ const CheckoutForm = ({ total, onSubmit, isProcessing }) => {
                       setFormData(prev => ({ ...prev, cvv: value }));
                     }}
                     maxLength="3"
-                    className={`w-full px-4 py-2 pl-10 border ${errors.cvv ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
+                    className={`w-full px-4 py-2 pl-10 border ${
+                      errors.cvv ? 'border-red-300' : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent`}
                   />
                   <SafeIcon
                     icon={FiShield}
                     className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
                   />
                 </div>
-                {errors.cvv && <p className="mt-1 text-sm text-red-600">{errors.cvv}</p>}
+                {errors.cvv && (
+                  <p className="mt-1 text-sm text-red-600">{errors.cvv}</p>
+                )}
               </div>
             </div>
 

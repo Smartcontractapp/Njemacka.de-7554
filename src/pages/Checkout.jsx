@@ -11,8 +11,9 @@ const { FiArrowLeft, FiShoppingBag, FiLock } = FiIcons;
 const Checkout = () => {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Example order data
+  const [paymentError, setPaymentError] = useState(null);
+
+  // Example order data 
   const [orderData] = useState({
     items: [
       {
@@ -37,15 +38,18 @@ const Checkout = () => {
 
   const handleSubmit = async (formData) => {
     setIsProcessing(true);
+    setPaymentError(null);
+
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Redirect to success page
+
+      // Simulate successful payment
       navigate('/checkout/success');
+
     } catch (error) {
       console.error('Payment error:', error);
-    } finally {
+      setPaymentError('Došlo je do greške prilikom obrade plaćanja. Molimo pokušajte ponovo.');
       setIsProcessing(false);
     }
   };
@@ -56,13 +60,13 @@ const Checkout = () => {
         {/* Header */}
         <div className="max-w-2xl mx-auto mb-12">
           <Link 
-            to="/cart" 
+            to="/cart"
             className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-8"
           >
             <SafeIcon icon={FiArrowLeft} className="w-4 h-4" />
             <span>Nazad na korpu</span>
           </Link>
-          
+
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <SafeIcon icon={FiShoppingBag} className="w-8 h-8 text-primary-600" />
@@ -78,9 +82,20 @@ const Checkout = () => {
         <div className="max-w-2xl mx-auto mb-8">
           <div className="flex items-center justify-center space-x-2 bg-green-50 text-green-700 px-4 py-2 rounded-lg">
             <SafeIcon icon={FiLock} className="w-5 h-5" />
-            <span className="text-sm font-medium">Sigurno plaćanje sa SSL enkripcijom</span>
+            <span className="text-sm font-medium">
+              Sigurno plaćanje sa SSL enkripcijom
+            </span>
           </div>
         </div>
+
+        {/* Payment Error */}
+        {paymentError && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              {paymentError}
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto">
@@ -104,7 +119,7 @@ const Checkout = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <OrderSummary
+              <OrderSummary 
                 items={orderData.items}
                 subtotal={orderData.subtotal}
                 shipping={orderData.shipping}
